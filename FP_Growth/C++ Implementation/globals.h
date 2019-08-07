@@ -4,24 +4,22 @@ using namespace std;
 #define PRINT_FLAG 0
 
 double min_sup,minFreq;
-vector<vector<string> > transactions;
-map<string,int> freq;
-vector<string> candidates;
+vector<vector<int> > transactions;
+int freq[MAX];
+vector<int> candidates;
 double totalLength = 0;
 
 
-map<string,int> order;///fp-tree item order
 map<int,int> frequentPatternsCnt;///for frequent patern count
-map<int,vector<vector<string>>> frequentPatterns;
+map<int,vector<vector<int>>> frequentPatterns;///for frequent patterns
 
 void init()
 {
     transactions.clear();
-    freq.clear();
+    memset(freq,0,sizeof(freq));
     candidates.clear();
     totalLength = 0;
 
-    order.clear();
     frequentPatternsCnt.clear();
     frequentPatterns.clear();
 }

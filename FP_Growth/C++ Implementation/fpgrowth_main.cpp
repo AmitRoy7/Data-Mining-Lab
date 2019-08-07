@@ -31,7 +31,7 @@ void input()
 
 //    datasets.push_back("input.txt");
     datasets.push_back("Data Mining Book Example.txt");
-    datasets.push_back("FP-Growth Paper.dat");
+//    datasets.push_back("FP-Growth Paper.dat");
     datasets.push_back("mushroom.dat");
     datasets.push_back("retail.dat");
     datasets.push_back("chess.dat");
@@ -90,14 +90,12 @@ void input()
 
     ifstream fin;
     string temp;
-    vector<string>itemset;
+    vector<int>itemset;
 
-    vector<pair<int,string>> sorted_list;
 
 
     fin.open(filename.c_str());
     char ch[MAX];
-    int cn = 1;
 
     while(fin.getline(ch,MAX) && strlen(ch)>0)
     {
@@ -129,30 +127,43 @@ void input()
 
     }
 
-    prS("Scan Done");
+//    prS("Scan Done");
 
-    for( auto it:candidates)
-        sorted_list.push_back({-freq[it],it});
+//    for( auto it:candidates)
+//        sorted_list.push_back({-freq[it],it});
+//
+//    sort(sorted_list.begin(),sorted_list.end());
+//
+//
+//    int cnt = 1;
+//    for (auto it: sorted_list)
+//        order[it.second] = cnt++;
 
-    sort(sorted_list.begin(),sorted_list.end());
+    sort(candidates.begin(),candidates.end(),transactionOrder);
 
+//    vectorPrintSp(candidates);
+//    cout<<endl;
 
-    int cnt = 1;
-    for (auto it: sorted_list)
-        order[it.second] = cnt++;
 
     for(int i =0; i<transactions.size(); i++)
     {
 
-        vector<string> tr = transactions[i];
-        sort(tr.begin(),tr.end(),transactionOrder);
-        transactions[i] = tr;
+//        vector<string> tr = transactions[i];
+        sort(transactions[i].begin(),transactions[i].end(),transactionOrder);
+//        vectorPrintSp(transactions[i]);cout<<endl;
+//        transactions[i] = tr;
+//        vectorPrintSp(transactions[i]);cout<<endl;
     }
-    sort(candidates.begin(),candidates.end(),transactionOrder);
+
+//    for(auto tr:transactions)
+//        {
+//            vectorPrintSp(tr);
+//            cout<<endl;
+//        }
 
     fin.close();
 
-    prS("Sorting Done");
+//    prS("Sorting Done");
 
     string datasetName = datasets[choice];
     int numOfTransation = transactions.size();
@@ -201,7 +212,7 @@ void build_FP_Tree()
 {
 
     vector<int> transactionSupCnt;
-    vector<string> patternsofar;
+    vector<int> patternsofar;
     for(int i=0; i<transactions.size(); i++)
         transactionSupCnt.push_back(1);
 
@@ -244,14 +255,22 @@ int main()
 
     prS("\n\n\t\tExecution Time: ");
 
-    if(execution_time >=60)
+    if(execution_time<1)
     {
-
-        prI((int)(execution_time/60));prS(" minute ")
-        execution_time -= (int)(execution_time/60) * 60;
+        execution_time*= 1000;
+        printf("%0.2lf milliseconds\n\n",execution_time);
     }
+    else
+    {
+        if(execution_time >=60)
+        {
 
-    printf("%0.2lf seconds\n\n",execution_time);
+            prI((int)(execution_time/60));prS(" minute ")
+            execution_time -= (int)(execution_time/60) * 60;
+        }
+
+        printf("%0.2lf seconds\n\n",execution_time);
+    }
 
     init();
     main();

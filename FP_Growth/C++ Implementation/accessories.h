@@ -1,13 +1,25 @@
 #include<bits/stdc++.h>
 using namespace std;
 
-vector<string> vSort(vector<string> &v)
+bool transactionOrder(int &a,int &b)
 {
-    sort(v.begin(),v.end());
+    int aa = freq[a];
+    int bb = freq[b];
+    if(aa==bb)
+        return a<=b;
+    return aa>bb;
+}
+
+inline bool checkBit(int mask,int pos){ return  (bool)(mask & (1<<pos));}
+
+
+vector<int> vSort(vector<int> &v)
+{
+    sort(v.begin(),v.end(),transactionOrder);
     return v;
 }
 
-void vectorPrintLn(vector<string> &v)
+void vectorPrintLn(vector<int> &v)
 {
 
     for(auto it: v)
@@ -16,7 +28,7 @@ void vectorPrintLn(vector<string> &v)
 }
 
 
-void vectorPrintSp(vector<string> &v)
+void vectorPrintSp(vector<int> &v)
 {
 
     for(int i=0;i<v.size();i++)
@@ -28,9 +40,9 @@ void vectorPrintSp(vector<string> &v)
 }
 
 
-vector<string> strToVec(string &s)
+vector<int> strToVec(string &s)
 {
-    vector<string> v;
+    vector<int> v;
     string tmp = "";
     int i=0;
     while(s[i])
@@ -42,22 +54,14 @@ vector<string> strToVec(string &s)
         else
         {
             if(tmp.size()>0)
-                v.push_back(tmp);
+                v.push_back(atoi(tmp.c_str()));
             tmp = "";
         }
         i++;
     }
     if(tmp.size()>0)
-        v.push_back(tmp);
+        v.push_back(atoi(tmp.c_str()));
 
     return v;
 }
 
-bool transactionOrder(string &a,string &b)
-{
-    int aa = order[a];
-    int bb = order[b];
-    return aa<bb;
-}
-
-inline bool checkBit(int mask,int pos){ return  (bool)(mask & (1<<pos));}

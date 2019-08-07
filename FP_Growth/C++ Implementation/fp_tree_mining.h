@@ -12,9 +12,9 @@ bool containsSinglePath(node* &curr){
 }
 
 
-vector<string> get_items_upto_root(node* &curr)
+vector<int> get_items_upto_root(node* &curr)
 {
-    vector<string> projected_transaction;
+    vector<int> projected_transaction;
     while(curr->par!=NULL)
         {
             projected_transaction.push_back(curr->item);
@@ -26,22 +26,24 @@ vector<string> get_items_upto_root(node* &curr)
 
 
 void recursive_FPTree(
-vector<vector<string>> &transactions,
+vector<vector<int>> &transactions,
 vector<int> &transactionSupCnt,
-vector<string> &patternSoFar,
+vector<int> &patternSoFar,
 int &supSoFar){
 
 
     node* root = new node();
     node* curr = root;
 
-    map<string,node*> hTable;
-    map<string,int> hTableSupCnt;
+    map<int,node*> hTable;
+    map<int,int> hTableSupCnt;
 
+    int one = 1;
     for(int i=0;i<transactions.size();i++)
         {
             curr = root;
             insertTransaction(curr,transactions[i],transactionSupCnt[i],hTable,hTableSupCnt);
+
         }
 
 
@@ -49,7 +51,7 @@ int &supSoFar){
     if(containsSinglePath(curr))
     {
 
-        vector<string> singlePath;
+        vector<int> singlePath;
         vector<int> singlePathSupCnt;
 
         ///single path item collection
@@ -73,7 +75,7 @@ int &supSoFar){
 
         int bits = singlePath.size();
         int tot = 1ll<< bits;
-        vector<string> maskVector;
+        vector<int> maskVector;
 
 
         for(int i=1;i<tot;i++)
@@ -105,59 +107,49 @@ int &supSoFar){
 
             frequentPatternsCnt[maskVector.size()]+=1;
             sort(maskVector.begin(),maskVector.end());
-            frequentPatterns[maskVector.size()].push_back(maskVector);
+//            frequentPatterns[maskVector.size()].push_back(maskVector);
 
         }
-
         return;
     }
 
-//    visitTrie(curr,"");
-//    return;
-
-//    for(auto it:candidates){
-//        if(hTable.find(it)!=hTable.end())
-//        {
-//            cout<<it<<endl;
-//            visitHTable(hTable[it]);
-//        }
-//    }
 
 
 
 
-    for(int i=candidates.size()-1;i>=0;i--)
+
+    for(auto it: hTable)
     {
-
-
-        string item = candidates[i];
+        int item = it.first;
         int supCount = hTableSupCnt[item];
 
-        if(hTable.find(item)==hTable.end() || supCount<minFreq)    continue;
+        if(supCount<minFreq)    continue;
 
 
         node* nextNode = hTable[item];
 
 
-        vector<vector<string>> new_transactions;
+        vector<vector<int>> new_transactions;
         vector<int> new_transactionSupCnt;
         node* curNode = nextNode;
 
         while(true)
         {
             node* par = curNode->par;
-            vector<string> projectedTransaction = get_items_upto_root(par);
+            vector<int> projectedTransaction = get_items_upto_root(par);
             if(projectedTransaction.size()>0)
             {
                 new_transactions.push_back(projectedTransaction);
                 new_transactionSupCnt.push_back(curNode->cnt);
             }
 
-            if(curNode->next==NULL)break;
-            curNode = curNode->next;
+            if(curNode->prev==NULL)break;
+            curNode = curNode->prev;
         }
 
         patternSoFar.push_back(item);
+        frequentPatternsCnt[patternSoFar.size()]+=1;
+//        frequentPatterns[patternSoFar.size()].push_back(patternSoFar);
 
 
         if(PRINT_FLAG)
@@ -173,8 +165,7 @@ int &supSoFar){
         }
 
 
-        frequentPatternsCnt[patternSoFar.size()]+=1;
-        frequentPatterns[patternSoFar.size()].push_back(patternSoFar);
+
         if(PRINT_FLAG)
             {
                 cout<<"P a T t E r N: ";
@@ -186,6 +177,8 @@ int &supSoFar){
         recursive_FPTree(new_transactions,new_transactionSupCnt,patternSoFar,supCount);
         patternSoFar.pop_back();
     }
+    return;
+
 }
 
 

@@ -3,23 +3,31 @@ using namespace std;
 
 struct node
 {
-    string item;
+    int item;
     int cnt;
     node* par;
-    map<string,node*> childs;
+    map<int,node*> childs;
 
-    node* next;///for htable;
+    node* prev;///for htable;
 
     node()
     {
-        item = "";
+        item = 0;
         cnt = 0;
-        par = next = NULL;
+        par = prev = NULL;
+        childs.clear();
+    }
+
+    void mydelete()
+    {
+        item = 0;
+        cnt = 0;
+        par = prev = NULL;
         childs.clear();
     }
 };
 
-node* createChild(node* &parent, string &item,map<string,node*> &hTable)
+node* createChild(node* &parent, int &item,map<int,node*> &hTable)
 {
     ///update node attribute
     node* newChild = new node();
@@ -29,22 +37,14 @@ node* createChild(node* &parent, string &item,map<string,node*> &hTable)
     newChild->childs.clear();
 
     ///update header table chain
-    if(hTable.find(item)==hTable.end())
-        hTable[item] = newChild;
-    else
-    {
-        node* cur = hTable[item];
-        while(cur->next!=NULL)
-            cur = cur->next;
-        cur->next = newChild;
-    }
-    newChild->next = NULL;
+    newChild->prev = hTable[item];
+    hTable[item] = newChild;
 
     return newChild;
 }
 
 
-void insertTransaction(node* &cur,vector<string> &transaction,int &sup,map<string,node*> &hTable,map<string,int> &hTableSupCnt)
+void insertTransaction(node* &cur,vector<int> &transaction,int &sup,map<int,node*> &hTable,map<int,int> &hTableSupCnt)
 {
 
     for(auto item: transaction)
@@ -57,21 +57,31 @@ void insertTransaction(node* &cur,vector<string> &transaction,int &sup,map<strin
     }
 }
 
-void visitTrie(node* &curr, string st)
+void del(node* &cur)
 {
-    for(auto it:curr->childs)
-        visitTrie(it.second,st+" "+it.first);
-    if(curr->childs.empty())
-        cout<<st<<endl;
+    for(auto it = cur->childs.begin();it!=cur->childs.end();it++)
+        del(it->second);
+
+    cur->mydelete();
+    delete(cur);
     return;
 }
+
+//void visitTrie(node* &curr, string st)
+//{
+//    for(auto it:curr->childs)
+//        visitTrie(it.second,st+" "+(string)it.first);
+//    if(curr->childs.empty())
+//        cout<<st<<endl;
+//    return;
+//}
 
 void visitHTable(node* &curr)
 {
     while(true)
     {
         cout<<curr->item<<" "<<curr->cnt<<endl;
-        curr = curr->next;
+        curr = curr->prev;
 
         if(curr==NULL)
             break;
