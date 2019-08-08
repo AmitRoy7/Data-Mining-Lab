@@ -1,0 +1,23 @@
+		Dataset Name: T40I10D100K.dat
+		No. of Transactions: 100000
+		Distinct Items: 942
+		Avg. Length: 39.61
+		Density Percentage: 4.20%
+		Dataset Type: Sparse Dataset
+
+
+		Enter Minimum Frequency Percentage%: 6
+
+		Minimum Support Threshold: 6000
+		=================================================
+		|     LEVEL-i   |	Frequent Patterns	|
+		=================================================
+		|	L-1	|		234		|
+		=================================================
+		|	L-2	|		5		|
+		=================================================
+		|	Total	|		239		|
+		=================================================
+
+
+		Execution Time: 39.211127 sec

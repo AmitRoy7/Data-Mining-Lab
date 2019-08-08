@@ -384,18 +384,18 @@ int main()
     if(execution_time<1.00)
     {
         execution_time*= 1000;
-        printf("%0.2lf milliseconds\n\n",execution_time);
+        printf("%0.6lf milisec\n\n",execution_time);
     }
     else
     {
         if(execution_time >=60)
         {
 
-            prI((int)(execution_time/60));prS(" minute ")
+            prI((int)(execution_time/60));prS(" min ")
             execution_time -= (int)(execution_time/60) * 60;
         }
 
-        printf("%0.2lf seconds\n\n",execution_time);
+        printf("%0.6lf sec\n\n",execution_time);
     }
     init();
     main();
