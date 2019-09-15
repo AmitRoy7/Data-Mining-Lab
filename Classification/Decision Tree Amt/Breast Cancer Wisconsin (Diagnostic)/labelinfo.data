@@ -1,0 +1,12 @@
+Sample code number 2
+Clump Thickness 1
+Uniformity of Cell Size 1
+Uniformity of Cell Shape 1
+Marginal Adhesion 1
+Single Epithelial Cell Size 1
+Bare Nuclei 1
+Bland Chromatin 1
+Normal Nucleoli 1
+Mitoses 1
+class(cancer_type) 0
+Missing Attribute Values ?
