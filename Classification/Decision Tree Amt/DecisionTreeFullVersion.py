@@ -3,19 +3,43 @@ from copy import deepcopy
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 import math
+import os
+from tabulate import tabulate
+import termtables as tt
 
 
-#function for reading dataset
-#returns attribute,feature_matrix and class_matrix
+
+
+def getMostCommonAttVal(class_matrix,idx):
+    cntMp={}
+    mx = 0
+    res = ""
+    for tuple in class_matrix:
+        attVal = tuple[idx]
+        if attVal not in cntMp:
+            cntMp[attVal] = 0
+        cntMp[attVal] += 1
+
+        if cntMp[attVal] > mx:
+            mx = cntMp[attVal]
+            res = attVal
+
+    return res
+
+
+
+# function for reading dataset
+# returns attribute,feature_matrix and class_matrix
 def readFile():
-    path = "/home/amit-roy/Dropbox/Own 4-2/2.Lab/CSE-4255: Introducing Data mining and warehousnig Lab/Classification/Decision Tree Amt/"
+    path = os.getcwd()
+    path += "/"
 
-    datasets = ["Sample Input","Book Example", "Mushroom", "Iris",
+    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
-                "Abalone", "Car", "Play Tennis"]
+                "Abalone", "Play Tennis"]
 
-    print("\n\t\t\tDecision Tree - Classification Algorithm")
+    print("\n\t\t\t\t\tDecision Tree - Classification Algorithm")
     print("\t\t=============================================================\n\n")
     print("\t\t\t\tSelect Dataset\n\n")
 
@@ -51,6 +75,7 @@ def readFile():
 
     continuous_attribute = {}
 
+
     for idx in range(len(labelinfo)):
         label = labelinfo[idx]
         label = label.replace("\n", "")
@@ -70,9 +95,9 @@ def readFile():
             label = label.split(" ")
 
             attribute = label[0]
-            for idx in range(1, len(label) - 1):
+            for idx2 in range(1, len(label) - 1):
                 attribute += " "
-                attribute += label[idx]
+                attribute += label[idx2]
             type = int(label[len(label) - 1])
 
             # 0 means nominal/categorical/discrete
@@ -84,7 +109,7 @@ def readFile():
             if type == 1:
                 continuous_attribute[idx] = 1
 
-            attribute_name.append((attribute,type))
+            attribute_name.append((attribute, type))
 
     # print("Has Missing Attributes: " , missing_attribute)
     # print("Class Label Idx: ", class_idx)
@@ -96,13 +121,22 @@ def readFile():
     #     if idx > 100:
     #         break
 
+
     for idx in range(len(dataset)):
         tuple = dataset[idx]
         tuple = tuple.replace("\n", "")
         tuple = tuple.split(",")
+        dataset[idx] = tuple
+
+
+    for idx in range(len(dataset)):
+
+        tuple = dataset[idx]
 
         for x in range(len(tuple)):
             if x in continuous_attribute:
+                if tuple[x] == '?':
+                    tuple[x] = getMostCommonAttVal(deepcopy(dataset),x)
                 tuple[x] = float(tuple[x])
 
 
@@ -111,42 +145,78 @@ def readFile():
         tuple.pop(class_idx)
         feature_matrix.append(tuple)
 
-    # for idx in range(len(feature_matrix)):
-    #     print(feature_matrix[idx],class_matrix[idx])
-    #     if(idx>100):
-    #         break
 
-    return attribute_name,feature_matrix,class_matrix
+    classCnt = {}
+    totClass = len(class_matrix)
+    for _class in class_matrix:
+        if _class not in classCnt:
+            classCnt[_class] = 0
+        classCnt[_class] += 1
 
-def getTuples(X,idxList):
+
+
+    print("\n\n\t\tDataset Name: ",datasets[choice])
+    print("\t\tTotal Tuples: ",len(feature_matrix))
+    print("\t\tTotal Attributes: ",len(attribute_name),"\n\n")
+    print("\t\t\t\t\t\tClass Distribution")
+    print("\t\t==============================================")
+
+
+    class_distribution = []
+
+    for _class in classCnt:
+
+        class_distribution.append([_class,classCnt[_class],round(classCnt[_class]/totClass,4)])
+
+    class_distribution = sorted(class_distribution)
+
+    string = tt.to_string(
+        class_distribution,
+        header=["Class", "Cnt","Proportion"],
+        style=tt.styles.ascii_thin_double,
+        # alignment="ll",
+        # padding=(1, 10),
+    )
+    string = string.split("\n")
+    for x in string:
+        print("\t\t\t",x)
+
+    return attribute_name, feature_matrix, class_matrix
+
+
+def getTuples(X, idxList):
     ret = []
     for idx in idxList:
         ret.append(X[idx])
     return ret
 
-def getUniqueClass(class_matrix,valid_tuple):
+
+def getUniqueClass(class_matrix, valid_tuple):
     class_list = []
     for row in valid_tuple:
         if class_matrix[row] not in class_list:
             class_list.append(class_matrix[row])
     return class_list
 
+
 attidx = 0
+
+
 def comparator(tuple):
     return tuple[attidx]
+
 
 class decision_tree():
 
     def __init__(self):
-        self.node_class = ""                #leaf node
-        self.splitting_attribute = ""       #splitting_attribute
-        self.isNumeric = False              #if splitting attribute numeric or not
-        self.splitpoint = 0                 #required if splitting attribute is numeric
-        self.child_list = {}                #one child for each value of attribute
-        self.parent = ""                    #parent node
+        self.node_class = ""  # leaf node
+        self.splitting_attribute = ""  # splitting_attribute
+        self.isNumeric = False  # if splitting attribute numeric or not
+        self.splitpoint = 0  # required if splitting attribute is numeric
+        self.child_list = {}  # one child for each value of attribute
+        self.parent = ""  # parent node
 
-
-    def predict(self,row):
+    def predict(self, row):
         if self.node_class != "":
             return self.node_class
         else:
@@ -168,10 +238,14 @@ class decision_tree():
 
     def learn(self, attribute_names, isNumeric, attribute_list,
               feature_matrix, class_matrix, valid_tuple
-              , attribute_type, attribute_cnt, class_cnt):
+              , attribute_type, attribute_cnt, class_cnt,min_sup):
 
+        class_list = getUniqueClass(class_matrix, valid_tuple)
 
-        class_list = getUniqueClass(class_matrix,valid_tuple)
+        #pruning condition
+        if len(valid_tuple) < min_sup:
+            self.node_class = self.maxVoting(class_matrix,valid_tuple)
+            return
 
         # # no tuples left -> perform max voting in parent
         # if len(valid_tuple) == 0:
@@ -180,7 +254,7 @@ class decision_tree():
 
         # no attribute left -> perform max voting in valid tuples
         # if only attribute is serial no/id -> max voting is performed
-        if len(attribute_list) == 0 or (len(attribute_list)==1 and isNumeric[attribute_list[0]]==2):
+        if len(attribute_list) == 0 or (len(attribute_list) == 1 and isNumeric[attribute_list[0]] == 2):
             self.node_class = self.maxVoting(class_matrix, valid_tuple)
             return
 
@@ -192,17 +266,15 @@ class decision_tree():
 
         else:
 
-            splitting_attribute,idx,branches = self.attribute_selection_method(
+            splitting_attribute, idx, branches = self.attribute_selection_method(
                 attribute_names, isNumeric, attribute_list,
                 feature_matrix, class_matrix, class_list, valid_tuple,
                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt))
 
-
             attribute_list.remove(idx)
             self.splitting_attribute = splitting_attribute
 
-
-            #special case when the best splitting attribute is continuous
+            # special case when the best splitting attribute is continuous
 
             if isNumeric[idx] == 1:
 
@@ -212,11 +284,10 @@ class decision_tree():
                     new_valid_tuple0 = branches[x][0]
                     new_valid_tuple1 = branches[x][1]
 
-                    self.splitpoint = x #useful for prediction
+                    self.splitpoint = x  # useful for prediction
 
                     branch_label = splitting_attribute + "<=" + str(x)
                     # 0 less or equal
-
 
                     self.child_list[0] = decision_tree()
                     self.child_list[0].parent = self
@@ -226,13 +297,12 @@ class decision_tree():
 
                     else:
                         self.child_list[0].learn(attribute_names, isNumeric, deepcopy(attribute_list),
-                        feature_matrix, class_matrix, new_valid_tuple0,
-                        deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt))
+                                                 feature_matrix, class_matrix, new_valid_tuple0,
+                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
 
                     branch_label = splitting_attribute + ">" + str(x)
 
-
-                    #1 greater than
+                    # 1 greater than
                     self.child_list[1] = decision_tree()
                     self.child_list[1].parent = self
 
@@ -241,51 +311,46 @@ class decision_tree():
 
                     else:
                         self.child_list[1].learn(attribute_names, isNumeric, deepcopy(attribute_list),
-                        feature_matrix, class_matrix, new_valid_tuple1,
-                        deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt))
+                                                 feature_matrix, class_matrix, new_valid_tuple1,
+                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
 
                     return
 
-            #normal case when attribute is categorical/nominal
+            # normal case when attribute is categorical/nominal
 
             for branch_type in branches:
                 new_valid_tuple = branches[branch_type]
                 self.isNumeric = False
 
-
-
                 self.child_list[branch_type] = decision_tree()
                 self.child_list[branch_type].parent = self
 
                 if len(new_valid_tuple) == 0:
-                    self.child_list[branch_type].node_class = self.maxVoting(class_matrix,valid_tuple)
+                    self.child_list[branch_type].node_class = self.maxVoting(class_matrix, valid_tuple)
                     continue
 
                 self.child_list[branch_type].learn(
                     attribute_names, isNumeric, deepcopy(attribute_list),
                     feature_matrix, class_matrix, new_valid_tuple,
-                    deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt))
+                    deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
             return
 
+    # finds the best attribute for splitting
+    # gain is used as the measure
+    # id/serial no type attribute is avoided
+    # continuous attribute are splitted in midpoints after sorting
+    def attribute_selection_method(self, attribute_names, attribute_types, attribute_list
+                                   , feature_matrix, class_matrix, class_list, valid_tuple
+                                   , attribute_type, attribute_cnt, class_cnt):
 
-    #finds the best attribute for splitting
-    #gain is used as the measure
-    #id/serial no type attribute is avoided
-    #continuous attribute are splitted in midpoints after sorting
-    def attribute_selection_method(self,attribute_names,attribute_types,attribute_list
-                                   ,feature_matrix,class_matrix,class_list,valid_tuple
-                                   ,attribute_type,attribute_cnt,class_cnt):
-
-
-        #attribute_cnt_update
+        # attribute_cnt_update
         for i in range(0, len(attribute_list)):
             colNum = attribute_list[i]
             attribute = attribute_names[colNum]
 
-
-            if attribute_types[colNum]>0:    #1-> numerical 2->serial number
+            if attribute_types[colNum] > 0:  # 1-> numerical 2->serial number
                 continue
-            
+
             for j in range(0, len(valid_tuple)):
                 rowNum = valid_tuple[j]
                 attribute_feature = feature_matrix[rowNum][colNum]
@@ -294,8 +359,7 @@ class decision_tree():
                 attribute_cnt[attribute][attribute_feature][class_type] += 1
                 attribute_type[attribute][attribute_feature] += 1
 
-
-        #class_cnt update
+        # class_cnt update
         for class_type in class_matrix:
             class_cnt[class_type] += 1
 
@@ -306,19 +370,19 @@ class decision_tree():
         for class_type in class_list:
             prob = class_cnt[class_type] / total_tuple
             if prob > 0:
-                prob = - prob * math.log(prob,2.0)
+                prob = - prob * math.log(prob, 2.0)
                 infoD += prob
 
-        #gain calculation
+        # gain calculation
         gain = {}
 
-        #for categorical attribute
+        # for categorical attribute
         for x in attribute_list:
 
             type = attribute_types[x]
             if type == 1 or type == 2:
                 continue
-                
+
             attribute = attribute_names[x]
             tot = 0
             for feature in attribute_type[attribute]:
@@ -327,55 +391,50 @@ class decision_tree():
                 temp = 0
                 for class_type in class_list:
 
-
                     prob = attribute_cnt[attribute][feature][class_type] / attribute_type[attribute][feature]
                     # print(attribute,feature,class_type,attribute_cnt[attribute][feature][class_type],attribute_type[attribute][feature],prob)
-                    if prob >0:
+                    if prob > 0:
                         prob = - prob * math.log(prob, 2)
                         temp += prob
 
                 # print(attribute, feature, attribute_type[attribute][feature], temp)
-                temp *= (attribute_type[attribute][feature]/total_tuple)
+                temp *= (attribute_type[attribute][feature] / total_tuple)
                 # print(attribute,feature,attribute_type[attribute][feature],temp)
                 tot += temp
             attgain = infoD - tot
             # print(attribute,infoD,tot,attgain)
             gain[attribute] = attgain
 
+        # appending class column for sorting
+        new_feature_matrix = deepcopy(feature_matrix)
 
+        for i in range(len(new_feature_matrix)):
+            new_feature_matrix[i].append(class_matrix[i])
+        # print(new_feature_matrix[0])
 
-        #for numerical/continuous attribute:
+        # for numerical/continuous attribute:
         attribute_split_point = {}
         for attribute_id in attribute_list:
             attribute = attribute_names[attribute_id]
 
-            #checking numerical/continuous or not
+            # checking numerical/continuous or not
             if attribute_types[attribute_id] == 1:
 
                 gain[attribute] = 0
                 attribute_split_point[attribute] = 0
 
-                #appending class column for sorting
-                new_feature_matrix = []
-                feature_matrix_copy = deepcopy(feature_matrix)
-                for x in valid_tuple:
-                    new_feature_matrix.append(feature_matrix_copy[x])
-                for i in range(len(new_feature_matrix)):
-                    new_feature_matrix[i].append(class_matrix[i])
 
 
-
-                #sorting based on that attribute id
+                # sorting based on that attribute id
                 global attidx
                 attidx = attribute_id
-                new_feature_matrix = sorted(new_feature_matrix,key=comparator,)
+                new_feature_matrix = sorted(new_feature_matrix, key=comparator, )
 
-                #for n tuples try to split n-1 times and then
-                #calculate infogain for each split
-                for split_point in range(1,len(new_feature_matrix)):
+                # for n tuples try to split n-1 times and then
+                # calculate infogain for each split
+                for split_point in range(1, len(new_feature_matrix)):
                     first_half = new_feature_matrix[0:split_point]
                     second_half = new_feature_matrix[split_point:len(new_feature_matrix)]
-
 
                     mul1 = len(first_half) / len(new_feature_matrix)
                     mul2 = len(second_half) / len(new_feature_matrix)
@@ -383,6 +442,7 @@ class decision_tree():
                     cnt_mp1 = {}
                     cnt_mp2 = {}
                     class_idx = len(feature_matrix[0])
+
 
 
                     for x in first_half:
@@ -399,13 +459,13 @@ class decision_tree():
 
                     for x in cnt_mp1:
                         prob = cnt_mp1[x] / len(first_half)
-                        prob = - prob* math.log(prob,2.0)
+                        prob = - prob * math.log(prob, 2.0)
                         tot1 += prob
 
                     tot2 = 0
                     for x in cnt_mp2:
                         prob = cnt_mp2[x] / len(second_half)
-                        prob = - prob* math.log(prob,2.0)
+                        prob = - prob * math.log(prob, 2.0)
                         tot2 += prob
 
                     info = tot1 * mul1 + tot2 * mul2
@@ -414,13 +474,15 @@ class decision_tree():
                         gain[attribute] = attgain
                         attribute_split_point[attribute] = split_point
 
-
-
         bestAttributeIdx = attribute_list[0]
+        for x in attribute_list:
+            if attriute_types[x] != 2:
+                bestAttributeIdx = x
+                break
+
+
         bestAttribute = attribute_names[bestAttributeIdx]
-        mx = gain[bestAttribute]
-
-
+        mx = 0
 
         for idx in attribute_list:
 
@@ -429,17 +491,19 @@ class decision_tree():
             if type == 2:
                 continue
 
+
             attribute = attribute_names[idx]
             attgain = gain[attribute]
-
 
             if attgain >= mx:
                 mx = attgain
                 bestAttributeIdx = idx
                 bestAttribute = attribute
 
-
         bestAttributeBranches = {}
+
+
+
 
         if attribute_types[bestAttributeIdx] == 0:
 
@@ -450,25 +514,24 @@ class decision_tree():
                 type = feature_matrix[row][bestAttributeIdx]
                 bestAttributeBranches[type].append(row)
 
-        else:
+        else :
 
             split_point = attribute_split_point[bestAttribute]
             # appending class column for sorting
-            new_feature_matrix = []
-            for x in valid_tuple:
-                new_feature_matrix.append(feature_matrix[x])
-            for i in range(len(new_feature_matrix)):
-                new_feature_matrix[i].append(class_matrix[i])
-
+            new_feature_matrix = deepcopy(feature_matrix)
 
             attidx = attribute_id
             new_feature_matrix = sorted(new_feature_matrix, key=comparator)
 
-
             ai0 = new_feature_matrix[split_point - 1][bestAttributeIdx]
             ai1 = new_feature_matrix[split_point][bestAttributeIdx]
 
-            mid = (ai0 + ai1)/2.0
+            # print(ai0,ai1)
+            try:
+                mid = (ai0 + ai1) / 2.0
+            except:
+                print("Number format exception: ",ai0,ai1,ai0+ai1)
+                exit(0)
 
             first_half = []
             second_half = []
@@ -483,12 +546,11 @@ class decision_tree():
             bestAttributeBranches[mid] = {}
 
             bestAttributeBranches[mid][0] = first_half  # less or equal
-            bestAttributeBranches[mid][1] = second_half # greater or equal
+            bestAttributeBranches[mid][1] = second_half  # greater or equal
 
+        return bestAttribute, bestAttributeIdx, bestAttributeBranches
 
-        return bestAttribute,bestAttributeIdx,bestAttributeBranches
-
-    def maxVoting(self,class_matrix,valid_tuple):
+    def maxVoting(self, class_matrix, valid_tuple):
         class_cnt = {}
         for row in valid_tuple:
             class_type = class_matrix[row]
@@ -506,27 +568,28 @@ class decision_tree():
 
         return maxClass
 
-    def printDecisionTree(self,root,st):
+    def printDecisionTree(self, root, st):
         if root.node_class != "":
-            print(st+"\tPredicted Class : " + root.node_class)
+            print(st + "\tPredicted Class : " + root.node_class)
             return
 
-        print(st+"Splitting Attribute: -> " + root.splitting_attribute)
+        print(st + "Splitting Attribute: -> " + root.splitting_attribute)
         for attribute in root.child_list.keys():
             if root.isNumeric:
                 if attribute == 0:
                     print(st + " <= " + str(root.splitpoint))
-                elif attribute==1:
-                    print(st+" > "+ str(root.splitpoint))
+                elif attribute == 1:
+                    print(st + " > " + str(root.splitpoint))
             else:
-                print(st+str(attribute))
-            self.printDecisionTree(root.child_list[attribute],st+"\t")
+                print(st + str(attribute))
+            self.printDecisionTree(root.child_list[attribute], st + "\t")
+
 
 if __name__ == '__main__':
 
     while True:
 
-        attributes,feature_matrix,class_matrix = readFile()
+        attributes, feature_matrix, class_matrix = readFile()
 
         attribute_name = []
         attriute_types = []
@@ -537,38 +600,37 @@ if __name__ == '__main__':
             attribute_name.append(x[0])
             attriute_types.append(x[1])
 
-
         attribute_list = list(range(0, len(attributes)))
 
         dt = decision_tree()
         X = deepcopy(feature_matrix)
         y = deepcopy(class_matrix)
 
-        valid_tuple = list(range(0, len(X)))
 
+
+        valid_tuple = list(range(0, len(X)))
 
         attribute_cnt = {}
         attribute_type = {}
         class_cnt = {}
 
-        class_list = getUniqueClass(class_matrix,valid_tuple)
+        class_list = getUniqueClass(class_matrix, valid_tuple)
 
-        for i in range(0,len(attribute_list)):
+        for i in range(0, len(attribute_list)):
             colNum = attribute_list[i]
 
-            if attriute_types[colNum] >1:
+            if attriute_types[colNum] > 1:
                 continue
 
             attribute = attribute_name[colNum]
             attribute_cnt[attribute] = {}
             attribute_type[attribute] = {}
-            for j in range(0,len(valid_tuple)):
+            for j in range(0, len(valid_tuple)):
                 rowNum = valid_tuple[j]
                 feature = feature_matrix[rowNum][colNum]
                 # print(attribute,colNum,feature_matrix[rowNum])
                 attribute_cnt[attribute][feature] = {}
                 attribute_type[attribute][feature] = 0
-
 
                 for class_type in class_list:
                     attribute_cnt[attribute][feature][class_type] = 0
@@ -577,18 +639,69 @@ if __name__ == '__main__':
             class_cnt[class_type] = 0
 
 
-        dt.learn(deepcopy(attribute_name),deepcopy(attriute_types),deepcopy(attribute_list),X,y,valid_tuple
-                 ,deepcopy(attribute_type),deepcopy(attribute_cnt),deepcopy(class_cnt))
+        # testTuple = {"age": 35, "income": "medium", "married": "yes", "credit_rating": "fair"}
+        #
+        # print("\n\n\t\tTest Tuple: ", testTuple)
+        #
+        # print("\n\n\t\tPredicted Class: ", dt.predict(testTuple))
+
+        # perform cross validation and accuracy,recall,precision,f1-score
+
+        print("\n\n\t\tEnter Number of folds: ",end="")
+        numFold = int(input())
+        print("\n\n\t\tEnter Pruning Threshold: (%)",end="")
+        pruneThresh = float(input())
+        pruneThresh /= 100
 
 
 
+        kf = KFold(n_splits=numFold, random_state=True)
+        kf.get_n_splits(X)
 
-        testTuple = {"age":35,"income":"medium","married":"yes","credit_rating":"fair"}
+        accuracy = 0
 
-        print("\n\n\t\tTest Tuple: ",testTuple)
+        curFold = 1
+        print("\n\n\t\t\t\t\t\tDecision Tree Classification Results")
+        print("\t\t\t\t\t==========================================\n\n")
 
-        print("\n\n\t\tPredicted Class: ",dt.predict(testTuple))
+        for train_index, test_index in kf.split(X):
+            # print("TRAIN:", train_index, "TEST:", test_index)
+            X_train = getTuples(X, train_index)
+            y_train = getTuples(y, train_index)
+            X_test = getTuples(X, test_index)
+            y_test = getTuples(y, test_index)
+
+            valid_tuple = list(range(0, len(X_train)))
+
+            print("\n\t\tFold\t#%d\n\t\tLearning Decision Tree..."%curFold)
+
+            min_sup = pruneThresh * len(X_train)
+
+            dt.learn(deepcopy(attribute_name), deepcopy(attriute_types), deepcopy(attribute_list), X_train, y_train, valid_tuple
+                     , deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
+
+            y_predict = []
+
+            for i in range(0, len(X_test)):
+                data = X_test[i]
+                actual_class = y_test[i]
+
+                curTuple = {}
+                for i in range(0, len(attribute_name)):
+                    if attriute_types[i] == 2:              #serial number type attribute
+                        continue
+                    curTuple[attribute_name[i]] = data[i]
+                predicted_class = dt.predict(curTuple)
+                y_predict.append(predicted_class)
+
+            foldAccuraccy =  accuracy_score(y_test, y_predict)*100
+            accuracy += foldAccuraccy
+
+            print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,len(X_train),len(X_test)))
+            # print("\t\tFold #%d\t"%curFold," Accuracy(%%): %0.2lf\t"%(foldAccuraccy)," Training Set: %d\t"%len(X_train),"Test Set: %d\t",len(X_test))
+            curFold += 1
 
 
-        #perform cross validation and accuracy,recall,precision,f1-score
-       
+        accuracy = accuracy / numFold
+
+        print("\n\t\tTotal Folds: ",numFold,"Avg Accuracy: %0.2lf"%accuracy)
