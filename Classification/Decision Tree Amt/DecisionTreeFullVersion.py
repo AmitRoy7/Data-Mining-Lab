@@ -1,11 +1,13 @@
 import re
 from copy import deepcopy
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 import math
 import os
-from tabulate import tabulate
 import termtables as tt
+
+from sklearn.tree import DecisionTreeClassifier
 
 
 
@@ -23,7 +25,6 @@ def getMostCommonAttVal(class_matrix,idx):
         if cntMp[attVal] > mx:
             mx = cntMp[attVal]
             res = attVal
-
     return res
 
 
@@ -37,7 +38,7 @@ def readFile():
     datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
-                "Abalone", "Play Tennis"]
+                "Abalone", "Play Tennis","Poker Hand Testing"]
 
     print("\n\t\t\t\t\tDecision Tree - Classification Algorithm")
     print("\t\t=============================================================\n\n")
@@ -360,8 +361,8 @@ class decision_tree():
                 attribute_type[attribute][attribute_feature] += 1
 
         # class_cnt update
-        for class_type in class_matrix:
-            class_cnt[class_type] += 1
+        for row in valid_tuple:
+            class_cnt[class_matrix[row]] += 1
 
         # database info calculation
         infoD = 0
@@ -406,7 +407,11 @@ class decision_tree():
             gain[attribute] = attgain
 
         # appending class column for sorting
-        new_feature_matrix = deepcopy(feature_matrix)
+        temp_new_feature_matrix = deepcopy(feature_matrix)
+        new_feature_matrix = []
+
+        for row in valid_tuple:
+            new_feature_matrix.append(temp_new_feature_matrix[row])
 
         for i in range(len(new_feature_matrix)):
             new_feature_matrix[i].append(class_matrix[i])
@@ -474,6 +479,8 @@ class decision_tree():
                         gain[attribute] = attgain
                         attribute_split_point[attribute] = split_point
 
+
+
         bestAttributeIdx = attribute_list[0]
         for x in attribute_list:
             if attriute_types[x] != 2:
@@ -495,7 +502,7 @@ class decision_tree():
             attribute = attribute_names[idx]
             attgain = gain[attribute]
 
-            if attgain >= mx:
+            if attgain > mx:
                 mx = attgain
                 bestAttributeIdx = idx
                 bestAttribute = attribute
@@ -518,17 +525,25 @@ class decision_tree():
 
             split_point = attribute_split_point[bestAttribute]
             # appending class column for sorting
-            new_feature_matrix = deepcopy(feature_matrix)
+            temp_new_feature_matrix = deepcopy(feature_matrix)
+            new_feature_matrix = []
 
-            attidx = attribute_id
+            for row in valid_tuple:
+                new_feature_matrix.append(temp_new_feature_matrix[row])
+
+            for i in range(len(new_feature_matrix)):
+                new_feature_matrix[i].append(class_matrix[i])
+
+            attidx = bestAttributeIdx
             new_feature_matrix = sorted(new_feature_matrix, key=comparator)
 
             ai0 = new_feature_matrix[split_point - 1][bestAttributeIdx]
             ai1 = new_feature_matrix[split_point][bestAttributeIdx]
 
-            # print(ai0,ai1)
+
             try:
-                mid = (ai0 + ai1) / 2.0
+                mid = (ai0 + ai1)/ 2.0
+                # print(mid)
             except:
                 print("Number format exception: ",ai0,ai1,ai0+ai1)
                 exit(0)
@@ -547,6 +562,8 @@ class decision_tree():
 
             bestAttributeBranches[mid][0] = first_half  # less or equal
             bestAttributeBranches[mid][1] = second_half  # greater or equal
+
+        # print("best attribute",bestAttributeIdx,bestAttribute,gain[bestAttribute])
 
         return bestAttribute, bestAttributeIdx, bestAttributeBranches
 
@@ -602,7 +619,7 @@ if __name__ == '__main__':
 
         attribute_list = list(range(0, len(attributes)))
 
-        dt = decision_tree()
+        dt2 = decision_tree()
         X = deepcopy(feature_matrix)
         y = deepcopy(class_matrix)
 
@@ -639,6 +656,7 @@ if __name__ == '__main__':
             class_cnt[class_type] = 0
 
 
+
         # testTuple = {"age": 35, "income": "medium", "married": "yes", "credit_rating": "fair"}
         #
         # print("\n\n\t\tTest Tuple: ", testTuple)
@@ -649,13 +667,16 @@ if __name__ == '__main__':
 
         print("\n\n\t\tEnter Number of folds: ",end="")
         numFold = int(input())
-        print("\n\n\t\tEnter Pruning Threshold: (%)",end="")
+        print("\n\n\t\tEnter Pruning Threshold(%): ",end="")
         pruneThresh = float(input())
         pruneThresh /= 100
+        min_sup = pruneThresh * len(X)
 
+        # dt2.learn(deepcopy(attribute_name), deepcopy(attriute_types), deepcopy(attribute_list), X, y,
+        #          valid_tuple, deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt), min_sup)
+        # dt2.printDecisionTree(dt2, "")
 
-
-        kf = KFold(n_splits=numFold, random_state=True)
+        kf = KFold(n_splits=numFold,shuffle=True)
         kf.get_n_splits(X)
 
         accuracy = 0
@@ -664,7 +685,14 @@ if __name__ == '__main__':
         print("\n\n\t\t\t\t\t\tDecision Tree Classification Results")
         print("\t\t\t\t\t==========================================\n\n")
 
+
+        # skLearnDecisionTree = DecisionTreeClassifier(criterion='entropy')
+
+
+
         for train_index, test_index in kf.split(X):
+
+
             # print("TRAIN:", train_index, "TEST:", test_index)
             X_train = getTuples(X, train_index)
             y_train = getTuples(y, train_index)
@@ -677,8 +705,19 @@ if __name__ == '__main__':
 
             min_sup = pruneThresh * len(X_train)
 
+            dt = decision_tree()
             dt.learn(deepcopy(attribute_name), deepcopy(attriute_types), deepcopy(attribute_list), X_train, y_train, valid_tuple
                      , deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
+
+
+
+
+
+            # skLearnDecisionTree.fit(X_train,y_train)
+            # sky_predict = skLearnDecisionTree.predict(X_test)
+            #
+            # sk_accuracy = accuracy_score(y_test,sky_predict)*100
+
 
             y_predict = []
 
@@ -698,6 +737,7 @@ if __name__ == '__main__':
             accuracy += foldAccuraccy
 
             print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,len(X_train),len(X_test)))
+            # print("\t\tSKlearn Accuracy: %0.2lf"%sk_accuracy)
             # print("\t\tFold #%d\t"%curFold," Accuracy(%%): %0.2lf\t"%(foldAccuraccy)," Training Set: %d\t"%len(X_train),"Test Set: %d\t",len(X_test))
             curFold += 1
 

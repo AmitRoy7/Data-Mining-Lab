@@ -1,0 +1,11 @@
+18,high,no,fair,reject
+20,high,no,excellent,reject
+26,high,no,fair,accept
+32,medium,no,fair,accept
+31,low,yes,fair,accept
+30,low,yes,excellent,reject
+16,medium,no,fair,reject
+29,medium,yes,fair,accept
+17,medium,yes,excellent,accept
+26,medium,no,excellent,accept
+24,high,yes,fair,accept
