@@ -411,11 +411,11 @@ class decision_tree():
         new_feature_matrix = []
 
         for row in valid_tuple:
-            new_feature_matrix.append(temp_new_feature_matrix[row])
+            new_row = temp_new_feature_matrix[row]
+            new_row.append(class_matrix[row])
+            new_feature_matrix.append(new_row)
 
-        for i in range(len(new_feature_matrix)):
-            new_feature_matrix[i].append(class_matrix[i])
-        # print(new_feature_matrix[0])
+
 
         # for numerical/continuous attribute:
         attribute_split_point = {}
@@ -429,11 +429,10 @@ class decision_tree():
                 attribute_split_point[attribute] = 0
 
 
-
                 # sorting based on that attribute id
                 global attidx
                 attidx = attribute_id
-                new_feature_matrix = sorted(new_feature_matrix, key=comparator, )
+                new_feature_matrix = sorted(new_feature_matrix, key=comparator)
 
                 # for n tuples try to split n-1 times and then
                 # calculate infogain for each split
