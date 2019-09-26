@@ -1,13 +1,14 @@
 import re
 from copy import deepcopy
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import StratifiedKFold
+import time
+
+# from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 import math
 import os
 import termtables as tt
 
-from sklearn.tree import DecisionTreeClassifier
+# from sklearn.tree import DecisionTreeClassifier
 
 
 
@@ -26,6 +27,22 @@ def getMostCommonAttVal(class_matrix,idx):
             mx = cntMp[attVal]
             res = attVal
     return res
+
+def getImpClass(class_matrix):
+    cntMp = {}
+    mx = 10000000000000000000000
+    res = ""
+    for tuple in class_matrix:
+        attVal = tuple
+        if attVal not in cntMp:
+            cntMp[attVal] = 0
+        cntMp[attVal] += 1
+
+        if cntMp[attVal] < mx:
+            mx = cntMp[attVal]
+            res = attVal
+    return res
+
 
 
 
@@ -601,6 +618,47 @@ class decision_tree():
             self.printDecisionTree(root.child_list[attribute], st + "\t")
 
 
+def getAccuracy(y_test,y_predict):
+    tot = len(y_test)
+    cnt = 0
+    for idx in range(0,len(y_test)):
+        if y_test[idx] == y_predict[idx]:
+           cnt += 1
+    return (cnt/tot)
+
+def getPrecision(y_test, y_predict,important_class):
+    TP = 0
+    P = 0
+    for idx in range(0,len(y_test)):
+        if y_test[idx] == important_class:
+            P+=1
+            if(y_test[idx]==y_predict[idx]):
+                TP+=1
+    return (TP/P)
+
+def getRecall(y_test, y_predict,important_class):
+    TP = 0
+    FP = 0
+    P = 0
+    for idx in range(0,len(y_test)):
+        if y_test[idx] == important_class:
+            P+=1
+            if(y_test[idx]==y_predict[idx]):
+                TP+=1
+        else:
+            if y_predict[idx] == important_class:
+                FP += 1
+    return (TP/(TP+FP))
+
+def getfScore(y_test,y_predict,important_class):
+    precision = getPrecision(y_test,y_predict,important_class)
+    recall = getRecall(y_test,y_predict,important_class)
+    fScore = (2*precision*recall)/(precision+recall)
+    # print(precision,recall,fScore)
+    return fScore
+
+
+
 if __name__ == '__main__':
 
     while True:
@@ -621,7 +679,7 @@ if __name__ == '__main__':
         dt2 = decision_tree()
         X = deepcopy(feature_matrix)
         y = deepcopy(class_matrix)
-
+        important_class = getImpClass(class_matrix)
 
 
         valid_tuple = list(range(0, len(X)))
@@ -678,7 +736,11 @@ if __name__ == '__main__':
         kf = KFold(n_splits=numFold,shuffle=True)
         kf.get_n_splits(X)
 
+
         accuracy = 0
+        precision = 0
+        recall = 0
+        fScore = 0
 
         curFold = 1
         print("\n\n\t\t\t\t\t\tDecision Tree Classification Results")
@@ -688,7 +750,7 @@ if __name__ == '__main__':
         # skLearnDecisionTree = DecisionTreeClassifier(criterion='entropy')
 
 
-
+        st = time.time()
         for train_index, test_index in kf.split(X):
 
 
@@ -732,15 +794,32 @@ if __name__ == '__main__':
                 predicted_class = dt.predict(curTuple)
                 y_predict.append(predicted_class)
 
-            foldAccuraccy =  accuracy_score(y_test, y_predict)*100
-            accuracy += foldAccuraccy
+            foldAccuraccy = getAccuracy(y_test, y_predict)*100
+            foldPrecision = getPrecision(y_test,y_predict,important_class)*100
+            foldRecall = getRecall(y_test,y_predict,important_class)*100
+            foldfScore = getfScore(y_test,y_predict,important_class)*100
 
-            print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,len(X_train),len(X_test)))
+            accuracy += foldAccuraccy
+            precision += foldPrecision
+            recall += foldRecall
+            # print(foldPrecision,foldRecall,foldfScore)
+            fScore += foldPrecision
+
+
+            print("\t\tAccuracy(%%):\t%0.2lf\tPrecision(%%):\t%0.2lf\tRecall(%%):\t%0.2lf\tfScore(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,foldPrecision,foldRecall,foldfScore,len(X_train),len(X_test)))
             # print("\t\tSKlearn Accuracy: %0.2lf"%sk_accuracy)
             # print("\t\tFold #%d\t"%curFold," Accuracy(%%): %0.2lf\t"%(foldAccuraccy)," Training Set: %d\t"%len(X_train),"Test Set: %d\t",len(X_test))
             curFold += 1
 
+        en = time.time()
+        accuracy = accuracy/numFold
+        precision = precision/numFold
+        recall = recall/numFold
+        fScore = fScore/numFold
 
-        accuracy = accuracy / numFold
-
-        print("\n\t\tTotal Folds: ",numFold,"Avg Accuracy: %0.2lf"%accuracy)
+        print("\n\t\tTotal Folds: ",numFold)
+        print("\t\tAvg Accuracy(%%): %0.6lf"%accuracy)
+        print("\t\tAvg Precision(%%): %0.6lf" % precision)
+        print("\t\tAvg Recall(%%): %0.6lf" % recall)
+        print("\t\tAvg F-Score(%%): %0.6lf" % fScore)
+        print("\n\t\tTime Required: %0.6lfseconds"%(en-st))
