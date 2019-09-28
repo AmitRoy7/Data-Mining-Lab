@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 import time
 
-# from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 import math
 import os
@@ -30,7 +30,8 @@ def getMostCommonAttVal(class_matrix,idx):
 
 def getImpClass(class_matrix):
     cntMp = {}
-    mx = 10000000000000000000000
+    # mx = 10000000000000000000000
+    mx = 0
     res = ""
     for tuple in class_matrix:
         attVal = tuple
@@ -38,7 +39,8 @@ def getImpClass(class_matrix):
             cntMp[attVal] = 0
         cntMp[attVal] += 1
 
-        if cntMp[attVal] < mx:
+        # if cntMp[attVal] < mx:
+        if cntMp[attVal] > mx:
             mx = cntMp[attVal]
             res = attVal
     return res
@@ -52,7 +54,7 @@ def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom",
+    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
                 "Abalone", "Play Tennis","Poker Hand Testing"]
@@ -653,8 +655,10 @@ def getRecall(y_test, y_predict,important_class):
 def getfScore(y_test,y_predict,important_class):
     precision = getPrecision(y_test,y_predict,important_class)
     recall = getRecall(y_test,y_predict,important_class)
-    fScore = (2*precision*recall)/(precision+recall)
-    # print(precision,recall,fScore)
+    if (precision+recall)>0:
+    	fScore = (2*precision*recall)/(precision+recall)
+    else:
+    	fScore = 0
     return fScore
 
 
@@ -736,6 +740,9 @@ if __name__ == '__main__':
         kf = KFold(n_splits=numFold,shuffle=True)
         kf.get_n_splits(X)
 
+        # skf = StratifiedKFold(n_splits=numFold, shuffle=True)
+        # skf.get_n_splits(X)
+
 
         accuracy = 0
         precision = 0
@@ -803,7 +810,7 @@ if __name__ == '__main__':
             precision += foldPrecision
             recall += foldRecall
             # print(foldPrecision,foldRecall,foldfScore)
-            fScore += foldPrecision
+            fScore += foldfScore
 
 
             print("\t\tAccuracy(%%):\t%0.2lf\tPrecision(%%):\t%0.2lf\tRecall(%%):\t%0.2lf\tfScore(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,foldPrecision,foldRecall,foldfScore,len(X_train),len(X_test)))

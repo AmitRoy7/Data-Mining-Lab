@@ -1,7 +1,8 @@
 import re
 from copy import deepcopy
-import time
 
+import time
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 import math
@@ -9,24 +10,6 @@ import os
 import termtables as tt
 import numpy as np
 
-
-
-
-
-def getMostCommonAttVal(class_matrix,idx):
-    cntMp={}
-    mx = 0
-    res = ""
-    for tuple in class_matrix:
-        attVal = tuple[idx]
-        if attVal not in cntMp:
-            cntMp[attVal] = 0
-        cntMp[attVal] += 1
-
-        if cntMp[attVal] > mx:
-            mx = cntMp[attVal]
-            res = attVal
-    return res
 
 def getImpClass(class_matrix):
     cntMp = {}
@@ -44,11 +27,27 @@ def getImpClass(class_matrix):
     return res
 
 
+def getMostCommonAttVal(class_matrix,idx):
+    cntMp={}
+    mx = 0
+    res = ""
+    for tuple in class_matrix:
+        attVal = tuple[idx]
+        if attVal not in cntMp:
+            cntMp[attVal] = 0
+        cntMp[attVal] += 1
+
+        if cntMp[attVal] > mx:
+            mx = cntMp[attVal]
+            res = attVal
+    return res
+
+
 def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom",
+    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
                 "Abalone", "Play Tennis","Poker Hand Testing"]
@@ -214,12 +213,12 @@ class Naive_Bayes():
                 if self.isNumeric[i] == 1:
                     u, std = self.conditional_probability[cls][self.attribute_names[i]]
                     prob *= self.g(row[i], u, std)
-                else:
+                elif self.isNumeric[i] == 0:
                     prob *= self.conditional_probability[cls][self.attribute_names[i]][row[i]]
+            prob *= self.probability[cls]
             if prob > max:
                 max = prob
                 argmax = cls
-
         return argmax
 
     def learn(self, attribute_names, isNumeric,
@@ -233,7 +232,9 @@ class Naive_Bayes():
         self.attribute_names = attribute_names
         self.isNumeric = isNumeric
         self.class_list = class_list
+        self.probability = dict()
         for cls in class_list:
+            self.probability[cls] = 0
             if cls not in self.conditional_probability:
                 self.conditional_probability[cls] = dict()
             for key in value_list:
@@ -241,6 +242,12 @@ class Naive_Bayes():
                     self.conditional_probability[cls][key] = dict()
                 for value in value_list[key]:
                     self.conditional_probability[cls][key][value] = 0
+
+        for cls in class_matrix:
+            self.probability[cls] += 1
+
+        for key in self.probability:
+            self.probability[key]/=len(class_matrix)
 
         temp = dict()
         for i in range(len(isNumeric)):
@@ -254,7 +261,7 @@ class Naive_Bayes():
             for j in range(len(attribute_names)):
                 if isNumeric[j] == 0:
                     self.conditional_probability[class_matrix[i]][attribute_names[j]][feature_matrix[i][j]] += 1
-                else:
+                elif isNumeric[j] == 1:
                     temp[class_matrix[i]][attribute_names[j]].append(feature_matrix[i][j])
 
         for cls in self.conditional_probability:
@@ -279,6 +286,7 @@ class Naive_Bayes():
         for cls in temp:
             for attribute in temp[cls]:
                 self.conditional_probability[cls][attribute] = (np.mean(temp[cls][attribute]), np.std(temp[cls][attribute]))
+
 
 def getAccuracy(y_test,y_predict):
     tot = len(y_test)
@@ -315,7 +323,10 @@ def getRecall(y_test, y_predict,important_class):
 def getfScore(y_test,y_predict,important_class):
     precision = getPrecision(y_test,y_predict,important_class)
     recall = getRecall(y_test,y_predict,important_class)
-    fScore = (2*precision*recall)/(precision+recall)
+    if (precision+recall)>0:
+    	fScore = (2*precision*recall)/(precision+recall)
+    else:
+    	fScore = 0
     # print(precision,recall,fScore)
     return fScore
 
@@ -325,7 +336,6 @@ if __name__ == '__main__':
     while True:
 
         attributes, feature_matrix, class_matrix = readFile()
-        important_class = getImpClass(class_matrix)
 
         attribute_name = []
         attriute_types = []
@@ -341,6 +351,7 @@ if __name__ == '__main__':
         dt2 = Naive_Bayes()
         X = np.array(deepcopy(feature_matrix))
         y = deepcopy(class_matrix)
+        important_class = getImpClass(class_matrix)
 
         for i in range(len(attriute_types)):
             if attriute_types[i] == 0:
@@ -351,8 +362,9 @@ if __name__ == '__main__':
 
         print("\n\n\t\tEnter Number of folds: ",end="")
         numFold = int(input())
-        kf = KFold(n_splits=numFold, shuffle=True)
-        kf.get_n_splits(X)
+        kf = StratifiedKFold(n_splits=numFold, random_state=None, shuffle=True)#KFold(n_splits=numFold, shuffle=True)
+        kf.get_n_splits(X, y)
+
 
         accuracy = 0
         precision = 0
@@ -364,7 +376,7 @@ if __name__ == '__main__':
         print("\t\t\t\t\t==========================================\n\n")
 
         st = time.time()
-        for train_index, test_index in kf.split(X):
+        for train_index, test_index in kf.split(X,y):
             X_train = getTuples(X, train_index)
             y_train = getTuples(y, train_index)
             X_test = getTuples(X, test_index)
@@ -394,11 +406,10 @@ if __name__ == '__main__':
             accuracy += foldAccuraccy
             precision += foldPrecision
             recall += foldRecall
-            fScore += foldPrecision
+            # print(foldPrecision,foldRecall,foldfScore)
+            fScore += foldfScore
 
-            print(
-                "\t\tAccuracy(%%):\t%0.2lf\tPrecision(%%):\t%0.2lf\tRecall(%%):\t%0.2lf\tfScore(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t" % (
-                foldAccuraccy, foldPrecision, foldRecall, foldfScore, len(X_train), len(X_test)))
+            print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,len(X_train),len(X_test)))
             curFold += 1
 
         en = time.time()
