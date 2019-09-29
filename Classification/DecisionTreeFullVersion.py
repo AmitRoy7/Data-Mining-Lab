@@ -8,13 +8,12 @@ import math
 import os
 import termtables as tt
 
+
 # from sklearn.tree import DecisionTreeClassifier
 
 
-
-
-def getMostCommonAttVal(class_matrix,idx):
-    cntMp={}
+def getMostCommonAttVal(class_matrix, idx):
+    cntMp = {}
     mx = 0
     res = ""
     for tuple in class_matrix:
@@ -27,6 +26,7 @@ def getMostCommonAttVal(class_matrix,idx):
             mx = cntMp[attVal]
             res = attVal
     return res
+
 
 def getImpClass(class_matrix):
     cntMp = {}
@@ -46,18 +46,16 @@ def getImpClass(class_matrix):
     return res
 
 
-
-
 # function for reading dataset
 # returns attribute,feature_matrix and class_matrix
 def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine", "Cylinder Bands","Wine Quality",
+    datasets = ["Sample Input", "Book Example", "Iris", "Car", "Mushroom", "Wine", "Cylinder Bands", "Wine Quality",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
-                "Abalone", "Play Tennis","Poker Hand Testing"]
+                "Abalone", "Play Tennis", "Poker Hand Testing"]
 
     print("\n\t\t\t\t\tDecision Tree - Classification Algorithm")
     print("\t\t=============================================================\n\n")
@@ -95,11 +93,9 @@ def readFile():
 
     continuous_attribute = {}
 
-
     for idx in range(len(labelinfo)):
         label = labelinfo[idx]
         label = label.replace("\n", "")
-
 
         if label.startswith("class"):
             class_idx = idx
@@ -142,14 +138,12 @@ def readFile():
     #     if idx > 100:
     #         break
 
-
     for idx in range(len(dataset)):
         tuple = dataset[idx]
         tuple = tuple.replace("\n", "")
         tuple = tuple.replace(";", ",")
         tuple = tuple.split(",")
         dataset[idx] = tuple
-
 
     for idx in range(len(dataset)):
 
@@ -158,15 +152,13 @@ def readFile():
         for x in range(len(tuple)):
             if x in continuous_attribute:
                 if tuple[x] == '?':
-                    tuple[x] = getMostCommonAttVal(deepcopy(dataset),x)
+                    tuple[x] = getMostCommonAttVal(deepcopy(dataset), x)
                 tuple[x] = float(tuple[x])
-
 
         class_name = tuple[class_idx]
         class_matrix.append(class_name)
         tuple.pop(class_idx)
         feature_matrix.append(tuple)
-
 
     classCnt = {}
     totClass = len(class_matrix)
@@ -175,33 +167,29 @@ def readFile():
             classCnt[_class] = 0
         classCnt[_class] += 1
 
-
-
-    print("\n\n\t\tDataset Name: ",datasets[choice])
-    print("\t\tTotal Tuples: ",len(feature_matrix))
-    print("\t\tTotal Attributes: ",len(attribute_name),"\n\n")
+    print("\n\n\t\tDataset Name: ", datasets[choice])
+    print("\t\tTotal Tuples: ", len(feature_matrix))
+    print("\t\tTotal Attributes: ", len(attribute_name), "\n\n")
     print("\t\t\t\t\t\tClass Distribution")
     print("\t\t==============================================")
-
 
     class_distribution = []
 
     for _class in classCnt:
-
-        class_distribution.append([_class,classCnt[_class],round(classCnt[_class]/totClass,4)])
+        class_distribution.append([_class, classCnt[_class], round(classCnt[_class] / totClass, 4)])
 
     class_distribution = sorted(class_distribution)
 
     string = tt.to_string(
         class_distribution,
-        header=["Class", "Cnt","Proportion"],
+        header=["Class", "Cnt", "Proportion"],
         style=tt.styles.ascii_thin_double,
         # alignment="ll",
         # padding=(1, 10),
     )
     string = string.split("\n")
     for x in string:
-        print("\t\t\t",x)
+        print("\t\t\t", x)
 
     return attribute_name, feature_matrix, class_matrix
 
@@ -260,13 +248,13 @@ class decision_tree():
 
     def learn(self, attribute_names, isNumeric, attribute_list,
               feature_matrix, class_matrix, valid_tuple
-              , attribute_type, attribute_cnt, class_cnt,min_sup):
+              , attribute_type, attribute_cnt, class_cnt, min_sup):
 
         class_list = getUniqueClass(class_matrix, valid_tuple)
 
-        #pruning condition
+        # pruning condition
         if len(valid_tuple) < min_sup:
-            self.node_class = self.maxVoting(class_matrix,valid_tuple)
+            self.node_class = self.maxVoting(class_matrix, valid_tuple)
             return
 
         # # no tuples left -> perform max voting in parent
@@ -320,7 +308,8 @@ class decision_tree():
                     else:
                         self.child_list[0].learn(attribute_names, isNumeric, deepcopy(attribute_list),
                                                  feature_matrix, class_matrix, new_valid_tuple0,
-                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
+                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),
+                                                 min_sup)
 
                     branch_label = splitting_attribute + ">" + str(x)
 
@@ -334,7 +323,8 @@ class decision_tree():
                     else:
                         self.child_list[1].learn(attribute_names, isNumeric, deepcopy(attribute_list),
                                                  feature_matrix, class_matrix, new_valid_tuple1,
-                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
+                                                 deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),
+                                                 min_sup)
 
                     return
 
@@ -354,7 +344,7 @@ class decision_tree():
                 self.child_list[branch_type].learn(
                     attribute_names, isNumeric, deepcopy(attribute_list),
                     feature_matrix, class_matrix, new_valid_tuple,
-                    deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
+                    deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt), min_sup)
             return
 
     # finds the best attribute for splitting
@@ -436,8 +426,6 @@ class decision_tree():
             new_row.append(class_matrix[row])
             new_feature_matrix.append(new_row)
 
-
-
         # for numerical/continuous attribute:
         attribute_split_point = {}
         for attribute_id in attribute_list:
@@ -448,7 +436,6 @@ class decision_tree():
 
                 gain[attribute] = 0
                 attribute_split_point[attribute] = 0
-
 
                 # sorting based on that attribute id
                 global attidx
@@ -467,8 +454,6 @@ class decision_tree():
                     cnt_mp1 = {}
                     cnt_mp2 = {}
                     class_idx = len(feature_matrix[0])
-
-
 
                     for x in first_half:
                         if x[class_idx] not in cnt_mp1:
@@ -499,14 +484,11 @@ class decision_tree():
                         gain[attribute] = attgain
                         attribute_split_point[attribute] = split_point
 
-
-
         bestAttributeIdx = attribute_list[0]
         for x in attribute_list:
             if attriute_types[x] != 2:
                 bestAttributeIdx = x
                 break
-
 
         bestAttribute = attribute_names[bestAttributeIdx]
         mx = 0
@@ -518,7 +500,6 @@ class decision_tree():
             if type == 2:
                 continue
 
-
             attribute = attribute_names[idx]
             attgain = gain[attribute]
 
@@ -529,9 +510,6 @@ class decision_tree():
 
         bestAttributeBranches = {}
 
-
-
-
         if attribute_types[bestAttributeIdx] == 0:
 
             for type in attribute_type[bestAttribute]:
@@ -541,7 +519,7 @@ class decision_tree():
                 type = feature_matrix[row][bestAttributeIdx]
                 bestAttributeBranches[type].append(row)
 
-        else :
+        else:
 
             split_point = attribute_split_point[bestAttribute]
             # appending class column for sorting
@@ -560,12 +538,11 @@ class decision_tree():
             ai0 = new_feature_matrix[split_point - 1][bestAttributeIdx]
             ai1 = new_feature_matrix[split_point][bestAttributeIdx]
 
-
             try:
-                mid = (ai0 + ai1)/ 2.0
+                mid = (ai0 + ai1) / 2.0
                 # print(mid)
             except:
-                print("Number format exception: ",ai0,ai1,ai0+ai1)
+                print("Number format exception: ", ai0, ai1, ai0 + ai1)
                 exit(0)
 
             first_half = []
@@ -622,47 +599,54 @@ class decision_tree():
             self.printDecisionTree(root.child_list[attribute], st + "\t")
 
 
-def getAccuracy(y_test,y_predict):
+def getAccuracy(y_test, y_predict):
     tot = len(y_test)
     cnt = 0
-    for idx in range(0,len(y_test)):
+    for idx in range(0, len(y_test)):
         if y_test[idx] == y_predict[idx]:
-           cnt += 1
-    return (cnt/tot)
+            cnt += 1
+    return (cnt / tot)
 
-def getPrecision(y_test, y_predict,important_class):
+
+def getPrecision(y_test, y_predict, important_class):
     TP = 0
     P = 0
-    for idx in range(0,len(y_test)):
+    for idx in range(0, len(y_test)):
         if y_test[idx] == important_class:
-            P+=1
-            if(y_test[idx]==y_predict[idx]):
-                TP+=1
-    return (TP/P)
+            P += 1
+            if (y_test[idx] == y_predict[idx]):
+                TP += 1
+    if P == 0:
+        return 1
+    return (TP / P)
 
-def getRecall(y_test, y_predict,important_class):
+
+def getRecall(y_test, y_predict, important_class):
     TP = 0
     FP = 0
     P = 0
-    for idx in range(0,len(y_test)):
+    for idx in range(0, len(y_test)):
         if y_test[idx] == important_class:
-            P+=1
-            if(y_test[idx]==y_predict[idx]):
-                TP+=1
+            P += 1
+            if (y_test[idx] == y_predict[idx]):
+                TP += 1
         else:
             if y_predict[idx] == important_class:
                 FP += 1
-    return (TP/(TP+FP))
+    if (TP + FP) == 0:
+        return 1
 
-def getfScore(y_test,y_predict,important_class):
-    precision = getPrecision(y_test,y_predict,important_class)
-    recall = getRecall(y_test,y_predict,important_class)
-    if (precision+recall)>0:
-    	fScore = (2*precision*recall)/(precision+recall)
+    return (TP / (TP + FP))
+
+
+def getfScore(y_test, y_predict, important_class):
+    precision = getPrecision(y_test, y_predict, important_class)
+    recall = getRecall(y_test, y_predict, important_class)
+    if (precision + recall) > 0:
+        fScore = (2 * precision * recall) / (precision + recall)
     else:
-    	fScore = 0
+        fScore = 0
     return fScore
-
 
 
 if __name__ == '__main__':
@@ -686,7 +670,6 @@ if __name__ == '__main__':
         X = deepcopy(feature_matrix)
         y = deepcopy(class_matrix)
         important_class = getImpClass(class_matrix)
-
 
         valid_tuple = list(range(0, len(X)))
 
@@ -718,8 +701,6 @@ if __name__ == '__main__':
         for class_type in class_matrix:
             class_cnt[class_type] = 0
 
-
-
         # testTuple = {"age": 35, "income": "medium", "married": "yes", "credit_rating": "fair"}
         #
         # print("\n\n\t\tTest Tuple: ", testTuple)
@@ -728,9 +709,9 @@ if __name__ == '__main__':
 
         # perform cross validation and accuracy,recall,precision,f1-score
 
-        print("\n\n\t\tEnter Number of folds: ",end="")
+        print("\n\n\t\tEnter Number of folds: ", end="")
         numFold = int(input())
-        print("\n\n\t\tEnter Pruning Threshold(%): ",end="")
+        print("\n\n\t\tEnter Pruning Threshold(%): ", end="")
         pruneThresh = float(input())
         pruneThresh /= 100
         min_sup = pruneThresh * len(X)
@@ -739,12 +720,11 @@ if __name__ == '__main__':
         #          valid_tuple, deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt), min_sup)
         # dt2.printDecisionTree(dt2, "")
 
-        kf = KFold(n_splits=numFold,shuffle=True)
+        kf = KFold(n_splits=numFold, shuffle=True)
         kf.get_n_splits(X)
 
         # skf = StratifiedKFold(n_splits=numFold, shuffle=True)
         # skf.get_n_splits(X)
-
 
         accuracy = 0
         precision = 0
@@ -755,13 +735,10 @@ if __name__ == '__main__':
         print("\n\n\t\t\t\t\t\tDecision Tree Classification Results")
         print("\t\t\t\t\t==========================================\n\n")
 
-
         # skLearnDecisionTree = DecisionTreeClassifier(criterion='entropy')
-
 
         st = time.time()
         for train_index, test_index in kf.split(X):
-
 
             # print("TRAIN:", train_index, "TEST:", test_index)
             X_train = getTuples(X, train_index)
@@ -771,23 +748,19 @@ if __name__ == '__main__':
 
             valid_tuple = list(range(0, len(X_train)))
 
-            print("\n\t\tFold\t#%d\n\t\tLearning Decision Tree..."%curFold)
+            print("\n\t\tFold\t#%d\n\t\tLearning Decision Tree..." % curFold)
 
             min_sup = pruneThresh * len(X_train)
 
             dt = decision_tree()
-            dt.learn(deepcopy(attribute_name), deepcopy(attriute_types), deepcopy(attribute_list), X_train, y_train, valid_tuple
-                     , deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt),min_sup)
-
-
-
-
+            dt.learn(deepcopy(attribute_name), deepcopy(attriute_types), deepcopy(attribute_list), X_train, y_train,
+                     valid_tuple
+                     , deepcopy(attribute_type), deepcopy(attribute_cnt), deepcopy(class_cnt), min_sup)
 
             # skLearnDecisionTree.fit(X_train,y_train)
             # sky_predict = skLearnDecisionTree.predict(X_test)
             #
             # sk_accuracy = accuracy_score(y_test,sky_predict)*100
-
 
             y_predict = []
 
@@ -797,16 +770,16 @@ if __name__ == '__main__':
 
                 curTuple = {}
                 for i in range(0, len(attribute_name)):
-                    if attriute_types[i] == 2:              #serial number type attribute
+                    if attriute_types[i] == 2:  # serial number type attribute
                         continue
                     curTuple[attribute_name[i]] = data[i]
                 predicted_class = dt.predict(curTuple)
                 y_predict.append(predicted_class)
 
-            foldAccuraccy = getAccuracy(y_test, y_predict)*100
-            foldPrecision = getPrecision(y_test,y_predict,important_class)*100
-            foldRecall = getRecall(y_test,y_predict,important_class)*100
-            foldfScore = getfScore(y_test,y_predict,important_class)*100
+            foldAccuraccy = getAccuracy(y_test, y_predict) * 100
+            foldPrecision = getPrecision(y_test, y_predict, important_class) * 100
+            foldRecall = getRecall(y_test, y_predict, important_class) * 100
+            foldfScore = getfScore(y_test, y_predict, important_class) * 100
 
             accuracy += foldAccuraccy
             precision += foldPrecision
@@ -814,21 +787,22 @@ if __name__ == '__main__':
             # print(foldPrecision,foldRecall,foldfScore)
             fScore += foldfScore
 
-
-            print("\t\tAccuracy(%%):\t%0.2lf\tPrecision(%%):\t%0.2lf\tRecall(%%):\t%0.2lf\tfScore(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,foldPrecision,foldRecall,foldfScore,len(X_train),len(X_test)))
+            print(
+                "\t\tAccuracy(%%):\t%0.2lf\tPrecision(%%):\t%0.2lf\tRecall(%%):\t%0.2lf\tfScore(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t" % (
+                foldAccuraccy, foldPrecision, foldRecall, foldfScore, len(X_train), len(X_test)))
             # print("\t\tSKlearn Accuracy: %0.2lf"%sk_accuracy)
             # print("\t\tFold #%d\t"%curFold," Accuracy(%%): %0.2lf\t"%(foldAccuraccy)," Training Set: %d\t"%len(X_train),"Test Set: %d\t",len(X_test))
             curFold += 1
 
         en = time.time()
-        accuracy = accuracy/numFold
-        precision = precision/numFold
-        recall = recall/numFold
-        fScore = fScore/numFold
+        accuracy = accuracy / numFold
+        precision = precision / numFold
+        recall = recall / numFold
+        fScore = fScore / numFold
 
-        print("\n\t\tTotal Folds: ",numFold)
-        print("\t\tAvg Accuracy(%%): %0.6lf"%accuracy)
+        print("\n\t\tTotal Folds: ", numFold)
+        print("\t\tAvg Accuracy(%%): %0.6lf" % accuracy)
         print("\t\tAvg Precision(%%): %0.6lf" % precision)
         print("\t\tAvg Recall(%%): %0.6lf" % recall)
         print("\t\tAvg F-Score(%%): %0.6lf" % fScore)
-        print("\n\t\tTime Required: %0.6lfseconds"%(en-st))
+        print("\n\t\tTime Required: %0.6lfseconds" % (en - st))

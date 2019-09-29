@@ -1,32 +1,14 @@
 import re
 from copy import deepcopy
-from matplotlib import pyplot as plt
+
 import time
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
-
-from sklearn.metrics import roc_curve
-from sklearn.metrics import auc
-
 import math
 import os
 import termtables as tt
 import numpy as np
-
-
-# def draw_auc(y_true, y_score):
-#     fpr, tpr, thresholds = roc_curve(y_true, y_score)
-#     roc_auc = auc(y_true, y_score)
-#
-#     # Plot ROC curve
-#     plt.plot(fpr, tpr, label='ROC curve (area = %0.3f)' % roc_auc)
-#     plt.plot([0, 1], [0, 1], 'k--')  # random predictions curve
-#     plt.xlim([0.0, 1.0])
-#     plt.ylim([0.0, 1.0])
-#     plt.xlabel('False Positive Rate or (1 - Specifity)')
-#     plt.ylabel('True Positive Rate or (Sensitivity)')
-#     plt.title('Receiver Operating Characteristic')
-#     plt.legend(loc="lower right")
 
 
 def getImpClass(class_matrix):
@@ -45,8 +27,8 @@ def getImpClass(class_matrix):
     return res
 
 
-def getMostCommonAttVal(class_matrix, idx):
-    cntMp = {}
+def getMostCommonAttVal(class_matrix,idx):
+    cntMp={}
     mx = 0
     res = ""
     for tuple in class_matrix:
@@ -65,11 +47,11 @@ def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example", "Iris", "Wine",
+    datasets = ["Sample Input", "Book Example","Iris", "Wine",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)", "Cylinder Bands",
-                "Car", "Mushroom", "Wine Quality"]
-    # "Abalone", "Play Tennis","Poker Hand Testing"]
+                "Car", "Mushroom","Wine Quality"]
+                # "Abalone", "Play Tennis","Poker Hand Testing"]
 
     print("\n\t\t\t\t\tNaive Bayes - Classification Algorithm")
     print("\t\t=============================================================\n\n")
@@ -106,6 +88,7 @@ def readFile():
     missing_attribute = 0
 
     continuous_attribute = {}
+
 
     for idx in range(len(labelinfo)):
         label = labelinfo[idx]
@@ -155,13 +138,14 @@ def readFile():
         for x in range(len(tuple)):
             if x in continuous_attribute:
                 if tuple[x] == '?':
-                    tuple[x] = getMostCommonAttVal(deepcopy(dataset), x)
+                    tuple[x] = getMostCommonAttVal(deepcopy(dataset),x)
 
                 try:
                     tuple[x] = float(tuple[x])
                 except:
                     print(x, tuple)
                     exit(0)
+
 
         class_name = tuple[class_idx]
         class_matrix.append(class_name)
@@ -175,28 +159,28 @@ def readFile():
             classCnt[_class] = 0
         classCnt[_class] += 1
 
-    print("\n\n\t\tDataset Name: ", datasets[choice])
-    print("\t\tTotal Tuples: ", len(feature_matrix))
-    print("\t\tTotal Attributes: ", len(attribute_name), "\n\n")
+    print("\n\n\t\tDataset Name: ",datasets[choice])
+    print("\t\tTotal Tuples: ",len(feature_matrix))
+    print("\t\tTotal Attributes: ",len(attribute_name),"\n\n")
     print("\t\t\t\t\t\tClass Distribution")
     print("\t\t==============================================")
 
     class_distribution = []
 
     for _class in classCnt:
-        class_distribution.append([_class, classCnt[_class], round(classCnt[_class] / totClass, 4)])
+        class_distribution.append([_class,classCnt[_class],round(classCnt[_class]/totClass,4)])
     class_distribution = sorted(class_distribution)
 
     string = tt.to_string(
         class_distribution,
-        header=["Class", "Cnt", "Proportion"],
+        header=["Class", "Cnt","Proportion"],
         style=tt.styles.ascii_thin_double,
         # alignment="ll",
         # padding=(1, 10),
     )
     string = string.split("\n")
     for x in string:
-        print("\t\t\t", x)
+        print("\t\t\t",x)
 
     return attribute_name, feature_matrix, class_matrix
 
@@ -226,11 +210,12 @@ def comparator(tuple):
 class Naive_Bayes():
 
     def g(self, x, u, std):
-        if std == 0:
+        if std ==0:
             return 0
-        num = math.exp((-(x - u) ** 2) / (2 * (std ** 2)))
-        denom = math.sqrt(2 * math.acos(-1)) * std
-        ret = num / denom
+
+        num = math.exp((-(x-u)**2)/(2*(std**2)))
+        denom = math.sqrt(2*math.acos(-1))*std
+        ret = num/denom
         return ret
 
     def predict(self, row):
@@ -240,7 +225,7 @@ class Naive_Bayes():
             for i in range(len(self.isNumeric)):
                 if self.isNumeric[i] == 1:
                     u, std = self.conditional_probability[cls][self.attribute_names[i]]
-                    prob *= self.g(row[i], u, std)
+                    prob *= self.g(float(row[i]), u, std)
                 elif self.isNumeric[i] == 0:
                     prob *= self.conditional_probability[cls][self.attribute_names[i]][row[i]]
             prob *= self.probability[cls]
@@ -249,13 +234,13 @@ class Naive_Bayes():
                 argmax = cls
         return argmax
 
-    def learn(self, attribute_names, isNumeric, feature_matrix,
+    def learn(self, attribute_names, isNumeric,feature_matrix,
               class_matrix, class_list, value_list):
 
         if len(set(class_matrix)) != len(class_list):
             print("Class absent")
             exit(0)
-
+        self.feature_matrix = feature_matrix
         self.conditional_probability = dict()
         self.attribute_names = attribute_names
         self.isNumeric = isNumeric
@@ -275,7 +260,7 @@ class Naive_Bayes():
             self.probability[cls] += 1
 
         for key in self.probability:
-            self.probability[key] /= len(class_matrix)
+            self.probability[key]/=len(class_matrix)
 
         temp = dict()
         for i in range(len(isNumeric)):
@@ -313,58 +298,51 @@ class Naive_Bayes():
 
         for cls in temp:
             for attribute in temp[cls]:
-                self.conditional_probability[cls][attribute] = (
-                np.mean(temp[cls][attribute]), np.std(temp[cls][attribute]))
+                self.conditional_probability[cls][attribute] = (np.mean(temp[cls][attribute]), np.std(temp[cls][attribute]))
 
 
-def getAccuracy(y_test, y_predict):
+def getAccuracy(y_test,y_predict):
     tot = len(y_test)
     cnt = 0
-    for idx in range(0, len(y_test)):
+    for idx in range(0,len(y_test)):
         if y_test[idx] == y_predict[idx]:
-            cnt += 1
-    return (cnt / tot)
+           cnt += 1
+    return (cnt/tot)
 
-
-def getPrecision(y_test, y_predict, important_class):
+def getPrecision(y_test, y_predict,important_class):
     TP = 0
     P = 0
-    for idx in range(0, len(y_test)):
+    for idx in range(0,len(y_test)):
         if y_test[idx] == important_class:
-            P += 1
-            if (y_test[idx] == y_predict[idx]):
-                TP += 1
-    if P == 0:
-        return 1
-    return (TP / P)
+            P+=1
+            if(y_test[idx]==y_predict[idx]):
+                TP+=1
+    return (TP/P)
 
-
-def getRecall(y_test, y_predict, important_class):
+def getRecall(y_test, y_predict,important_class):
     TP = 0
     FP = 0
     P = 0
-    for idx in range(0, len(y_test)):
+    for idx in range(0,len(y_test)):
         if y_test[idx] == important_class:
-            P += 1
-            if (y_test[idx] == y_predict[idx]):
-                TP += 1
+            P+=1
+            if(y_test[idx]==y_predict[idx]):
+                TP+=1
         else:
             if y_predict[idx] == important_class:
                 FP += 1
-    if (TP + FP) == 0:
-        return 1
-    return (TP / (TP + FP))
+    return (TP/(TP+FP))
 
-
-def getfScore(y_test, y_predict, important_class):
-    precision = getPrecision(y_test, y_predict, important_class)
-    recall = getRecall(y_test, y_predict, important_class)
-    if (precision + recall) > 0:
-        fScore = (2 * precision * recall) / (precision + recall)
+def getfScore(y_test,y_predict,important_class):
+    precision = getPrecision(y_test,y_predict,important_class)
+    recall = getRecall(y_test,y_predict,important_class)
+    if (precision+recall)>0:
+    	fScore = (2*precision*recall)/(precision+recall)
     else:
-        fScore = 0
+    	fScore = 0
     # print(precision,recall,fScore)
     return fScore
+
 
 
 if __name__ == '__main__':
@@ -395,10 +373,11 @@ if __name__ == '__main__':
 
         class_list = getUniqueClass(class_matrix, list(range(0, len(X))))
 
-        print("\n\n\t\tEnter Number of folds: ", end="")
+        print("\n\n\t\tEnter Number of folds: ",end="")
         numFold = int(input())
-        kf = StratifiedKFold(n_splits=numFold, random_state=None, shuffle=True)  # KFold(n_splits=numFold, shuffle=True)
+        kf = StratifiedKFold(n_splits=numFold, random_state=None, shuffle=True)#KFold(n_splits=numFold, shuffle=True)
         kf.get_n_splits(X, y)
+
 
         accuracy = 0
         precision = 0
@@ -410,7 +389,7 @@ if __name__ == '__main__':
         print("\t\t\t\t\t==========================================\n\n")
 
         st = time.time()
-        for train_index, test_index in kf.split(X, y):
+        for train_index, test_index in kf.split(X,y):
             X_train = getTuples(X, train_index)
             y_train = getTuples(y, train_index)
             X_test = getTuples(X, test_index)
@@ -418,7 +397,7 @@ if __name__ == '__main__':
 
             valid_tuple = list(range(0, len(X_train)))
 
-            print("\n\t\tFold\t#%d\n\t\tLearning Naive Bayes..." % curFold)
+            print("\n\t\tFold\t#%d\n\t\tLearning Naive Bayes..."%curFold)
 
             dt = Naive_Bayes()
             dt.learn(deepcopy(attribute_name), deepcopy(attriute_types), X_train, y_train, class_list, value_list)
@@ -428,7 +407,6 @@ if __name__ == '__main__':
             for i in range(0, len(X_test)):
                 data = X_test[i]
                 actual_class = y_test[i]
-
                 predicted_class = dt.predict(data)
                 y_predict.append(predicted_class)
 
@@ -437,15 +415,13 @@ if __name__ == '__main__':
             foldRecall = getRecall(y_test, y_predict, important_class) * 100
             foldfScore = getfScore(y_test, y_predict, important_class) * 100
 
-            # draw_auc(y_test,y_predict)
-
             accuracy += foldAccuraccy
             precision += foldPrecision
             recall += foldRecall
             # print(foldPrecision,foldRecall,foldfScore)
             fScore += foldfScore
 
-            print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t" % (foldAccuraccy, len(X_train), len(X_test)))
+            print("\t\tAccuracy(%%):\t%0.2lf\tTraining:\t%d\tTest:\t%d\t"%(foldAccuraccy,len(X_train),len(X_test)))
             curFold += 1
 
         en = time.time()

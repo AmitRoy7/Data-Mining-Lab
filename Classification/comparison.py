@@ -4,15 +4,14 @@ datasets_name = [
 "Iris",
 "Wine",
 "Breast Cancer",
-"Cylinder-Bands",
-"Diagnostic",
+"Wisconsin",
 "Original",
 "Prognostic",
-"Wine Quality"
+"Cylinder Bands",
 "Car",
-"Mushroom"
+"Mushroom",
+"Wine Quality"
 ]
-
 
 attributes = [
 4,
@@ -106,68 +105,70 @@ decision_tree_running_time = [
 ]
 
 naive_bayes_accuracy = [
-33.33,
-33.147,
-72.389,
-42.221,
-69.099,
-69.242,
-69.233,
-39.335,
-85.417,
-95.273
+95.333,
+96.665,
+71.693,
+96.143783,
+95.99,
+96.281516,
+73.0896,
+85.301788,
+95.347063,
+54.274818
 ]
 
 naive_bayes_precision = [
-100.00,
-100.00,
-83.609,
-100.000,
-99.782,
-99.782,
-99.782,
-90.751,
-95.867,
-90.322
+100,
+95,
+84.109,
+95.205447,
+95.195,
+95.19828,
+43.661,
+95.785124,
+90.449182,
+64.898025
+
 ]
 
 naive_bayes_recall = [
-33.33,
-33.147,
-78.469,
-100.000,
-68.007,
-68.109,
-68.132,
-42.928,
-91.710,
-99.859
+100,
+100,
+77.583,
+98.891164,
+98.668,
+99.10101,
+88.189,
+91.665833,
+99.886686,
+66.912366
 ]
 
 naive_bayes_fscore = [
-50.00,
-49.786,
-80.957,
-59.374,
-80.885,
-80.957,
-80.964,
-58.275,
-93.742,
-94.851
+100,
+97.391,
+80.623,
+96.992528,
+96.874,
+97.104764,
+52.275,
+93.663633,
+94.933085,
+65.764534
 ]
 
 naive_bayes_running_time = [
-0.009072,
-0.103515,
-0.034045,
-0.170198,
-0.070497,
-0.070609,
-0.071878,
-0.653502,
-0.072443,
-0.616981
+0.009613,
+0.028092,
+0.008924,
+0.048827,
+0.044584,
+0.047749,
+0.089919,
+0.042838,
+0.372548,
+0.297652
+
 ]
 
 n_groups = len(datasets_name)
@@ -176,33 +177,50 @@ index = np.arange(n_groups)
 bar_width = 0.4
 opacity = 0.8
 
-X = decision_tree_accuracy
-Y = naive_bayes_accuracy
+X = attributes
+Y = tuples
+measure_name = 'Count'
+file_name = 'dataset_description.png'
+
+
+# X = decision_tree_precision
+# Y = naive_bayes_precision
+# measure_name = 'Precision (%)'
+# file_name = 'precision_comparison.png'
+#
+#
+# X = decision_tree_recall
+# Y = naive_bayes_recall
+# measure_name = 'Recall (%)'
+# file_name = 'recall_comparison.png'
+#
+#
+# X = decision_tree_fscore
+# Y = naive_bayes_fscore
+# measure_name = 'F-Score (%)'
+# file_name = 'fscore_comparison.png'
 
 rects1 = plt.bar(index, X,bar_width,
 alpha=opacity,
 color='b',
-label='Decision Tree')
+label='Attributes')
 
 rects2 = plt.bar(index+bar_width, Y,bar_width,
 alpha=opacity,
 color='r',
-label='Naive Bayes')
+label='Tuples')
 
 plt.xlabel('Datasets')
-#change from here
-plt.ylabel('Accuracy (%)')
-plt.title('Performance Measure of Decision Tree and Naiive Bayes')
-#to here
+plt.ylabel(measure_name)
+plt.title('Dataset Description')
 
 plt.xticks(index+bar_width,tuple(datasets_name),rotation='vertical')
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
+plt.yscale('log',basey=2)
 
 plt.tight_layout()
-
-#change file name
-plt.savefig('accuracy_comparison.png',dpi=600)
+plt.savefig(file_name,dpi=600)
 #here
 
 plt.show()
