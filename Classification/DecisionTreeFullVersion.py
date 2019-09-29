@@ -54,7 +54,7 @@ def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine",
+    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine", "Cylinder Bands","Wine Quality",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
                 "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
                 "Abalone", "Play Tennis","Poker Hand Testing"]
@@ -99,6 +99,7 @@ def readFile():
     for idx in range(len(labelinfo)):
         label = labelinfo[idx]
         label = label.replace("\n", "")
+
 
         if label.startswith("class"):
             class_idx = idx
@@ -145,6 +146,7 @@ def readFile():
     for idx in range(len(dataset)):
         tuple = dataset[idx]
         tuple = tuple.replace("\n", "")
+        tuple = tuple.replace(";", ",")
         tuple = tuple.split(",")
         dataset[idx] = tuple
 

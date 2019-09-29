@@ -1,0 +1,16 @@
+age 1
+workclass 0
+fnlwgt 1
+education 0
+education_num 1
+marital_status 0
+occupation 0
+relationship 0
+race 0
+sex 0
+capital_gain 1
+capital_loss 1
+hours_per_week 1
+native_country 0
+class(age) 0
+Missing Attribute Values 0

@@ -47,10 +47,11 @@ def readFile():
     path = os.getcwd()
     path += "/"
 
-    datasets = ["Sample Input", "Book Example","Iris", "Car", "Mushroom", "Wine",
+    datasets = ["Sample Input", "Book Example","Iris", "Wine",
                 "Breast Cancer", "Breast Cancer Wisconsin (Diagnostic)",
-                "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)",
-                "Abalone", "Play Tennis","Poker Hand Testing"]
+                "Breast Cancer Wisconsin (Original)", "Breast Cancer Wisconsin (Prognostic)", "Cylinder Bands",
+                "Car", "Mushroom","Wine Quality"]
+                # "Abalone", "Play Tennis","Poker Hand Testing"]
 
     print("\n\t\t\t\t\tNaive Bayes - Classification Algorithm")
     print("\t\t=============================================================\n\n")
@@ -127,16 +128,24 @@ def readFile():
     for idx in range(len(dataset)):
         tuple = dataset[idx]
         tuple = tuple.replace("\n", "")
+        tuple = tuple.replace(";", ",")
         tuple = tuple.split(",")
         dataset[idx] = tuple
 
     for idx in range(len(dataset)):
         tuple = dataset[idx]
+        # print(tuple)
         for x in range(len(tuple)):
             if x in continuous_attribute:
                 if tuple[x] == '?':
                     tuple[x] = getMostCommonAttVal(deepcopy(dataset),x)
-                tuple[x] = float(tuple[x])
+
+                try:
+                    tuple[x] = float(tuple[x])
+                except:
+                    print(x, tuple)
+                    exit(0)
+
 
         class_name = tuple[class_idx]
         class_matrix.append(class_name)
