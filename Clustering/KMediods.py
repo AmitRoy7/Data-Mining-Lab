@@ -1,10 +1,19 @@
 from MixedDistance import *
+import matplotlib.pyplot as plt
 import numpy as np
+
+PLOT_FLAG = 0
 
 #S = set of representative objects/tuple
 #U = set of non-representive objects/tuple
 #Dp = distance to the closest object for a arbitary point p
 #Ep = distance to the 2nd closest object for a arbitary point p
+
+def getCost(Dj):
+    cost = 0.0
+    for x in Dj:
+        cost += x
+    return cost
 
 def updateDpAndEp(n,Dp,Ep,S,U,DisMat):
     for i in range(0,n):
@@ -20,8 +29,6 @@ def updateDpAndEp(n,Dp,Ep,S,U,DisMat):
     return
 
 def BUILD(n,k,data,DisMat):
-
-
 
     S = []
     U = list(range(0, len(data)))
@@ -74,9 +81,11 @@ def BUILD(n,k,data,DisMat):
     return S,U,Dp,Ep
 
 
-
 def SWAP(n,Dp,Ep,S,U,DisMat):
 
+    print("Initial Representative: ")
+    print(S)
+    print("Within Cluster Variation:", getCost(Dp))
 
     while True:
 
@@ -110,6 +119,8 @@ def SWAP(n,Dp,Ep,S,U,DisMat):
                     mn,ii,hh = Tih,i,h
 
         Tih = mn
+
+        print("Within Cluster Variation:", getCost(Dp))
 
         if Tih < 0:
             S.remove(ii)
@@ -153,12 +164,30 @@ if __name__ == '__main__':
     S, U, Dp, Ep = SWAP(n,Dp,Ep,S,U,DisMat)
     clusters = assignCluster(n,data,S,DisMat,Dp)
 
-    print(Dp)
+    # print(Dp)
 
     for representative in clusters.keys():
+        print("Cluster Representative: ", data[representative])
         print("Cluster Representative: ",representative+1)
         members = clusters[representative]
         for member in members:
-            print(member+1,end=" ")
+            # print(data[member],end=" ")
+            print(member, end=" ")
         print("")
 
+        cluster_member = []
+
+        if PLOT_FLAG == 1:
+
+            for member in members:
+                cluster_member.append(data[member])
+
+            cluster_member = np.array(cluster_member)
+            x, y = cluster_member.T
+            plt.scatter(x, y)
+
+    if PLOT_FLAG == 1:
+
+        plt.title("K-mediods algorithm for 250 random points")
+        plt.show()
+        print("Converged")

@@ -5,7 +5,7 @@ import math
 
 def readFile():
 
-    datasets = ["iris","breast-cancer","book"]
+    datasets = ["iris","breast-cancer","book","Sample"]
 
     for i in range(len(datasets)):
         print(i+1,":", datasets[i])
