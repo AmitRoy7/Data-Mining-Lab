@@ -1,6 +1,9 @@
 from MixedDistance import *
 import matplotlib.pyplot as plt
+import matplotlib.markers
 import numpy as np
+import time
+
 
 PLOT_FLAG = 0
 
@@ -8,6 +11,12 @@ PLOT_FLAG = 0
 #U = set of non-representive objects/tuple
 #Dp = distance to the closest object for a arbitary point p
 #Ep = distance to the 2nd closest object for a arbitary point p
+
+K_VECTOR = []
+COST_VECTOR = []
+RUNTIME_VECTOR = []
+PURITY_VECTOR = []
+SILHOUTTE_VECTOR = []
 
 def getCost(Dj):
     cost = 0.0
@@ -83,9 +92,9 @@ def BUILD(n,k,data,DisMat):
 
 def SWAP(n,Dp,Ep,S,U,DisMat):
 
-    print("Initial Representative: ")
-    print(S)
-    print("Within Cluster Variation:", getCost(Dp))
+    # print("Initial Representative: ")
+    # print(S)
+    # print("Within Cluster Variation:", getCost(Dp))
 
     while True:
 
@@ -120,7 +129,7 @@ def SWAP(n,Dp,Ep,S,U,DisMat):
 
         Tih = mn
 
-        print("Within Cluster Variation:", getCost(Dp))
+        # print("Within Cluster Variation:", getCost(Dp))
 
         if Tih < 0:
             S.remove(ii)
@@ -129,6 +138,9 @@ def SWAP(n,Dp,Ep,S,U,DisMat):
             S.append(hh)
             updateDpAndEp(n, Dp, Ep, S, U, DisMat)
         else:
+            cost = getCost(Dp)
+            print("Within Cluster Variation:", cost)
+            COST_VECTOR.append(cost)
             break
 
     return S,U,Dp,Ep
@@ -148,46 +160,115 @@ def assignCluster(n,data,S,DisMat,Dp):
                 break
     return clusters
 
+
+
+
 if __name__ == '__main__':
 
-    data, types, info, order_info = readFile()
+    print("\n\n\t\t K-Mediods Clustering Algorithm\n\n")
+
+    data, types, info, order_info,has_class,class_map,d,dataset = readFile()
+    if d < 3:
+        PLOT_FLAG = 1
+    else:
+        PLOT_FLAG = 0
     DisMat = getDissimilaryMatrix(data,types,info,order_info)
     n = len(data)
-    while True:
-        k = int(input("Enter k: "))
-        if k>n:
-            print("K should be less than n")
-        else:
-            break
+    # while True:
+    #     k = int(input("Enter k: "))
+    #     if k>n:
+    #         print("K should be less than n")
+    #     else:
+    #         break
 
-    S,U,Dp,Ep = BUILD(n,k,data,DisMat)
-    S, U, Dp, Ep = SWAP(n,Dp,Ep,S,U,DisMat)
-    clusters = assignCluster(n,data,S,DisMat,Dp)
+    print("Enter l: ", end="")
+    l = int(input())
+    print("Enter r: ", end="")
+    r = int(input())
+    for k in range(l,r+1):
 
-    # print(Dp)
+        K_VECTOR.append(k)
 
-    for representative in clusters.keys():
-        print("Cluster Representative: ", data[representative])
-        print("Cluster Representative: ",representative+1)
-        members = clusters[representative]
-        for member in members:
-            # print(data[member],end=" ")
-            print(member, end=" ")
-        print("")
+        st = time.time()
 
-        cluster_member = []
+        DisMat = getDissimilaryMatrix(data, types, info, order_info)
+        S,U,Dp,Ep = BUILD(n,k,data,DisMat)
+        S, U, Dp, Ep = SWAP(n,Dp,Ep,S,U,DisMat)
+        clusters = assignCluster(n,data,S,DisMat,Dp)
+        if has_class:
+            purity = calculate_purity(clusters,n,class_map)
+            PURITY_VECTOR.append(purity)
+
+            print("Purity:",purity)
+
+        silhouette_coeff = 0
+        for obj in range(n):
+            silhouette_coeff += calculate_silhouette_coefficient(data, clusters, obj, types, info, order_info)
+        silhouette_coeff /= n
+        print("Silhoutte Coefficient:",silhouette_coeff)
+        SILHOUTTE_VECTOR.append(silhouette_coeff)
+
+
+        en = time.time()
+        print("Runtime:",en-st)
+        RUNTIME_VECTOR.append((en-st))
+
+        for representative in clusters.keys():
+            ### print("Cluster Representative: ", data[representative])
+            # print("Cluster Representative: ",representative)
+            members = clusters[representative]
+            # for member in members:
+
+            #     print(member, end=" ")
+            # print("")
+
+            cluster_member = []
+
+            if PLOT_FLAG == 1:
+
+                for member in members:
+                    cluster_member.append(data[member])
+
+                cluster_member = np.array(cluster_member)
+                x, y = cluster_member.T
+                plt.scatter(x, y)
 
         if PLOT_FLAG == 1:
 
-            for member in members:
-                cluster_member.append(data[member])
+            cluster_leader = []
+            for x in S:
+                temp = data[x]
+                xx = temp[0]
+                yy = temp[1]
+                plt.scatter(xx,yy,marker="*")
 
-            cluster_member = np.array(cluster_member)
-            x, y = cluster_member.T
-            plt.scatter(x, y)
 
-    if PLOT_FLAG == 1:
+            plt.suptitle("K-mediods algorithm Visualization")
+            plt.title("Dataset Name: "+dataset)
+            plt.show()
+            print("Converged")
 
-        plt.title("K-mediods algorithm for 250 random points")
-        plt.show()
-        print("Converged")
+
+    print("K: ")
+    for k in K_VECTOR:
+        print(k)
+
+    print("Runtime: ")
+    for runtime in RUNTIME_VECTOR:
+        print(runtime)
+
+    print("Purity: ")
+    for purity in PURITY_VECTOR:
+        print(purity)
+
+    print("Silhouette Coefficient: ")
+    for coeff in SILHOUTTE_VECTOR:
+        print(coeff)
+
+
+    print("COST:(WCV)")
+    for wcv in COST_VECTOR:
+        print(wcv)
+
+
+

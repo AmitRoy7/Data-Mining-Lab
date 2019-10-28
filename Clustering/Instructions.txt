@@ -1,0 +1,30 @@
+Dataset: call girl
+
+correlation/cohetion
+purity
+inverse purity
+
+
+unsupervised learning datasets
+
+intra-cluster purity
+inter-cluster purity
+goodness of a cluster
+
+
+time analysis and purity analysis varying k 
+
+
+1. dataset e cluster kore ki paba?
+
+2. algorithm implementation detlais 
+
+3. measurement of cluster (purity, inverse purity) description
+quality measurement output (time and purity analysis varying k)
+
+4. randomly choosing centroid would result in different result
+random centroid niye jodi different different leader/mediod pai taile 
+k-means valo na, dbscan or other types of density based clustering 
+method valo kaj korbe
+
+5. 

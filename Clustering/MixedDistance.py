@@ -1,11 +1,18 @@
 from time import time
-
+import re
 import numpy as np
 import math
 
+from copy import deepcopy
+
+
 def readFile():
 
-    datasets = ["iris","breast-cancer","book","Sample"]
+    datasets = ["Iris(With Purity)","Glass(With Purity)","breast-cancer(With Purity)","Libras Movement(With Purity)","Seeds(With purity)","R15(With Purity)",
+                "Thyroid","Wine","Yeast","Breast","Wdbc","leaves"
+                ,"Aggregation","Compound","Pathbased","Spiral","Jain","Flame","Sample"]
+                # "iris","breast-cancer","book","S1","S2","S3","S4","A1","A2","A3"
+                # ,"Birch1","Birch2","Birch3"]
 
     for i in range(len(datasets)):
         print(i+1,":", datasets[i])
@@ -17,17 +24,24 @@ def readFile():
     types = []
     for l in open(datasets[dataset] + "/types.info").readlines():
         types.append(l.replace("\n", ""))
-    print(types)
+
 
     info = [None for i in range(len(types))]
 
+
     data = []
+    has_class = False
+    class_map = {}
+    row = 0
     for l in open(datasets[dataset] + "/dataset.data").readlines():
         l = l.replace("\n", "")
+        l = re.sub("\s+", ",", l.strip())
         l = l.split(",")
         d_tuple = []
         for i in range(len(types)):
             if types[i] == "Numeric":
+
+
                 d_tuple.append(float(l[i]))
                 if info[i] is None:
                     info[i] = (float(l[i]), float(l[i]))
@@ -39,15 +53,51 @@ def readFile():
                 d_tuple.append(l[i])
             if types[i] == "Ordinal":
                 d_tuple.append(l[i])
+            if types[i] == "Class":
+
+                has_class = True
+                class_map[row] = l[i]
+                row += 1
+
+            if types[i] == "R":
+                continue
+
+
         data.append(d_tuple)
+
+    print("Total Tuples, N: ",len(data))
+    d = len(data[0])
+    print("Dimension Per Tuple, D:",d)
+
+
+
+    info_temp = []
+    for x in info:
+        if x is None:
+            continue
+        info_temp.append(x)
+    info = deepcopy(info_temp)
+
+    types_temp = []
+
+    for x in types:
+        if x=="R" or x=="Class":
+            continue
+        types_temp.append(x)
+
+    types = deepcopy(types_temp)
+
+    # print(info)
 
     order_info = []
     for l in open(datasets[dataset] + "/order.info").readlines():
         l = l.replace(" ", "").replace("\n", "")
         l = l.split(",")
+        if l[0]=='R':
+            continue
         order_info.append(l)
 
-    return data,types,info,order_info
+    return data,types,info,order_info,has_class,class_map,d,datasets[dataset]
 
 
 def dis(row1, row2, types, info, order_info):
@@ -71,11 +121,14 @@ def dis(row1, row2, types, info, order_info):
                 up += 1
         if types[i] == "Ordinal":
             r1, r2 = None, None
+
             for o in range(len(order_info[i])):
+
                 if order_info[i][o] == row1[i]:
                     r1 = o
                 if order_info[i][o] == row2[i]:
                     r2 = o
+
             distance = math.fabs(r1 - r2)/(len(order_info[i])-1)
             down += 1
             up += distance
@@ -100,6 +153,49 @@ def getDissimilaryMatrix(data, types, info, order_info):
     #         print("%0.2lf "%DisMat[i][j],end="")
     #     print("")
     return DisMat
+
+
+def calculate_silhouette_coefficient(data,clusters, object, types, info, order_info):
+    a = 0
+    b = math.inf
+
+    for x in clusters.keys():
+        cluster = clusters[x]
+
+        if object in cluster:
+            for sample_object in cluster:
+                if sample_object == object:
+                    continue
+                a += dis(data[sample_object], data[object], types, info, order_info)
+            a /= (len(cluster) - 1)
+        else:
+            temp = 0
+            for sample_object in cluster:
+                temp += dis(data[sample_object], data[object], types, info, order_info)
+            temp /= (len(cluster))
+            b = min(temp, b)
+
+    return (b - a) / (max(a, b))
+
+
+def calculate_purity(clusters,n,class_map):
+    tot = 0
+    for idx in clusters.keys():
+        cluster = clusters[idx]
+        cnt = {}
+        for tuple_idx in cluster:
+            tuple_class = class_map[tuple_idx]
+            if tuple_class not in cnt.keys():
+                cnt[tuple_class] = 0
+            cnt[tuple_class] += 1
+
+        res = 0
+        for x in cnt.keys():
+            res = max(res,cnt[x])
+
+        tot += res
+    return (tot/n)
+
 
 if __name__ == '__main__':
 
